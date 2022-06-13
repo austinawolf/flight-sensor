@@ -84,7 +84,7 @@
 #elif defined (CUSTOM_BOARD_INC)
   #include STRINGIFY(CUSTOM_BOARD_INC.h)
 #elif defined(BOARD_CUSTOM)
-  #include "custom_board.h"
+  #include "pca301.h"
 #else
 #error "Board is not defined"
 
