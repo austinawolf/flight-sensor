@@ -28,6 +28,11 @@ extern "C" {
 #define BSP_LED_2      LED_3
 #define BSP_LED_3      LED_4
 
+#define SENSOR_TWI_SDA		NRF_GPIO_PIN_MAP(0,4) 
+#define SENSOR_TWI_SCL		NRF_GPIO_PIN_MAP(0,26)
+#define SENSOR_TWI_INT		NRF_GPIO_PIN_MAP(0,6)
+
+/* UNUSED */
 #define BUTTONS_NUMBER 0
 
 #define BUTTON_1       NULL

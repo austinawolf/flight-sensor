@@ -48,6 +48,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "twi_api.h"
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_sdm.h"
@@ -82,8 +83,8 @@
 #include "nrf_log_default_backends.h"
 
 
-#define DEVICE_NAME                         "Nordic_HRM"                            /**< Name of device. Will be included in the advertising data. */
-#define MANUFACTURER_NAME                   "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                         "FlightSensor"                          /**< Name of device. Will be included in the advertising data. */
+#define MANUFACTURER_NAME                   "Flight Sensor"                         /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                    300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 
 #define APP_ADV_DURATION                    18000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
@@ -973,9 +974,15 @@ int main(void)
     peer_manager_init();
 
     // Start execution.
-    NRF_LOG_INFO("Heart Rate Sensor example started.");
+    NRF_LOG_INFO("Flight Sensor Started.");
     application_timers_start();
-    advertising_start(erase_bonds);
+    //advertising_start(erase_bonds);
+
+    twi_init();
+
+    uint8_t data[1] = {0};
+    int id = twi_scan();
+    NRF_LOG_INFO("Scan: %d", id);
 
     // Enter main loop.
     for (;;)
