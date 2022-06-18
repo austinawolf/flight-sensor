@@ -49,6 +49,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "twi_api.h"
+#include "imu_api.h"
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_sdm.h"
@@ -77,6 +78,7 @@
 #include "nrf_ble_qwr.h"
 #include "ble_conn_state.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_delay.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -976,18 +978,12 @@ int main(void)
     // Start execution.
     NRF_LOG_INFO("Flight Sensor Started.");
     application_timers_start();
-    //advertising_start(erase_bonds);
-
-    twi_init();
-
-    uint8_t data[1] = {0};
-    int id = twi_scan();
-    NRF_LOG_INFO("Scan: %d", id);
+    advertising_start(erase_bonds);
 
     // Enter main loop.
     for (;;)
     {
-        idle_state_handle();
+        NRF_LOG_FLUSH();
     }
 }
 
