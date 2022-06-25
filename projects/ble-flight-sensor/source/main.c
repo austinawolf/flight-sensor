@@ -102,25 +102,8 @@
 #define APP_BLE_CONN_CFG_TAG                1                                       /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_OBSERVER_PRIO               3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
-#define BATTERY_LEVEL_MEAS_INTERVAL         APP_TIMER_TICKS(2000)                   /**< Battery level measurement interval (ticks). */
-#define MIN_BATTERY_LEVEL                   81                                      /**< Minimum simulated battery level. */
-#define MAX_BATTERY_LEVEL                   100                                     /**< Maximum simulated 7battery level. */
-#define BATTERY_LEVEL_INCREMENT             1                                       /**< Increment between each simulated battery level measurement. */
-
-#define HEART_RATE_MEAS_INTERVAL            APP_TIMER_TICKS(1000)                   /**< Heart rate measurement interval (ticks). */
-#define MIN_HEART_RATE                      140                                     /**< Minimum heart rate as returned by the simulated measurement function. */
-#define MAX_HEART_RATE                      300                                     /**< Maximum heart rate as returned by the simulated measurement function. */
-#define HEART_RATE_INCREMENT                10                                      /**< Value by which the heart rate is incremented/decremented for each call to the simulated measurement function. */
-
-#define RR_INTERVAL_INTERVAL                APP_TIMER_TICKS(300)                    /**< RR interval interval (ticks). */
-#define MIN_RR_INTERVAL                     100                                     /**< Minimum RR interval as returned by the simulated measurement function. */
-#define MAX_RR_INTERVAL                     500                                     /**< Maximum RR interval as returned by the simulated measurement function. */
-#define RR_INTERVAL_INCREMENT               1                                       /**< Value by which the RR interval is incremented/decremented for each call to the simulated measurement function. */
-
-#define SENSOR_CONTACT_DETECTED_INTERVAL    APP_TIMER_TICKS(5000)                   /**< Sensor Contact Detected toggle interval (ticks). */
-
-#define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(400, UNIT_1_25_MS)        /**< Minimum acceptable connection interval (0.4 seconds). */
-#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(650, UNIT_1_25_MS)        /**< Maximum acceptable connection interval (0.65 second). */
+#define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Minimum acceptable connection interval (0.4 seconds). */
+#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Maximum acceptable connection interval (0.65 second). */
 #define SLAVE_LATENCY                       0                                       /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS(4000, UNIT_10_MS)         /**< Connection supervisory timeout (4 seconds). */
 
@@ -141,46 +124,46 @@
 
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
+#define CHECK_ARGLEN(_N) if (p_command -> arg_len != _N) do { \
+    ble_motion_command_error_send(&m_motion, p_command->opcode, SDS_INVALID_ARG_LEN); \
+    break; \
+    } while (0)
+
+
 typedef enum {
 	DISCONNECTED,
 	CONNECTED,
 } connection_status_t;
 
 typedef struct {
-	sds_session_destination_t session_dest;
-	connection_status_t connection_status;
-	volatile bool streaming;
+    sds_session_destination_t session_dest;
+    connection_status_t connection_status;
+    volatile bool streaming;
     volatile bool sd_buffer_full;
 } main_control_block_t;
 
-BLE_HRS_DEF(m_hrs);                                                 /**< Heart rate service instance. */
-BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
+BLE_MOTION_DEF(m_motion);
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
-APP_TIMER_DEF(m_battery_timer_id);                                  /**< Battery timer. */
-APP_TIMER_DEF(m_heart_rate_timer_id);                               /**< Heart rate measurement timer. */
-APP_TIMER_DEF(m_rr_interval_timer_id);                              /**< RR interval timer. */
-APP_TIMER_DEF(m_sensor_contact_timer_id);                           /**< Sensor contact detected timer. */
 
 static uint16_t m_conn_handle         = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
-static bool     m_rr_interval_enabled = true;                       /**< Flag for enabling and disabling the registration of new RR interval measurements (the purpose of disabling this is just to test sending HRM without RR interval data. */
 
-static sensorsim_cfg_t   m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
-static sensorsim_state_t m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
-static sensorsim_cfg_t   m_heart_rate_sim_cfg;                      /**< Heart Rate sensor simulator configuration. */
-static sensorsim_state_t m_heart_rate_sim_state;                    /**< Heart Rate sensor simulator state. */
-static sensorsim_cfg_t   m_rr_interval_sim_cfg;                     /**< RR Interval sensor simulator configuration. */
-static sensorsim_state_t m_rr_interval_sim_state;                   /**< RR Interval sensor simulator state. */
+static void ble_motion_command_handler(sds_command_t * p_command); 	/**< See definition. */
+static void ble_motion_evt_handler(ble_motion_evt_type_t evt_type); 	/**< See definition. */
 
 static ble_uuid_t m_adv_uuids[] =                                   /**< Universally unique service identifiers. */
 {
-    {BLE_UUID_HEART_RATE_SERVICE,           BLE_UUID_TYPE_BLE},
-    {BLE_UUID_BATTERY_SERVICE,              BLE_UUID_TYPE_BLE},
-    {BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_UUID_TYPE_BLE}
+    {BLE_UUID_MOTION_SERVICE,           BLE_UUID_TYPE_BLE},
 };
 
-static main_control_block_t cb; /**< Control block for main. */
+static main_control_block_t cb = 
+{
+  .session_dest = SESSION_TO_CENTRAL,
+  .connection_status = CONNECTED,
+  .streaming = false,
+  .sd_buffer_full = false,
+}; /**< Control block for main. */
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -252,136 +235,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
     }
 }
 
-
-/**@brief Function for performing battery measurement and updating the Battery Level characteristic
- *        in Battery Service.
- */
-static void battery_level_update(void)
-{
-    ret_code_t err_code;
-    uint8_t  battery_level;
-
-    battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
-
-    err_code = ble_bas_battery_level_update(&m_bas, battery_level, BLE_CONN_HANDLE_ALL);
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != NRF_ERROR_RESOURCES) &&
-        (err_code != NRF_ERROR_BUSY) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-       )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-}
-
-
-/**@brief Function for handling the Battery measurement timer timeout.
- *
- * @details This function will be called each time the battery level measurement timer expires.
- *
- * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
- *                       app_start_timer() call to the timeout handler.
- */
-static void battery_level_meas_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-    battery_level_update();
-}
-
-
-/**@brief Function for handling the Heart rate measurement timer timeout.
- *
- * @details This function will be called each time the heart rate measurement timer expires.
- *          It will exclude RR Interval data from every third measurement.
- *
- * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
- *                       app_start_timer() call to the timeout handler.
- */
-static void heart_rate_meas_timeout_handler(void * p_context)
-{
-    static uint32_t cnt = 0;
-    ret_code_t      err_code;
-    uint16_t        heart_rate;
-
-    UNUSED_PARAMETER(p_context);
-
-    heart_rate = (uint16_t)sensorsim_measure(&m_heart_rate_sim_state, &m_heart_rate_sim_cfg);
-
-    cnt++;
-    err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != NRF_ERROR_RESOURCES) &&
-        (err_code != NRF_ERROR_BUSY) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-       )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-
-    // Disable RR Interval recording every third heart rate measurement.
-    // NOTE: An application will normally not do this. It is done here just for testing generation
-    // of messages without RR Interval measurements.
-    m_rr_interval_enabled = ((cnt % 3) != 0);
-}
-
-
-/**@brief Function for handling the RR interval timer timeout.
- *
- * @details This function will be called each time the RR interval timer expires.
- *
- * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
- *                       app_start_timer() call to the timeout handler.
- */
-static void rr_interval_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-
-    if (m_rr_interval_enabled)
-    {
-        uint16_t rr_interval;
-
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-        rr_interval = (uint16_t)sensorsim_measure(&m_rr_interval_sim_state,
-                                                  &m_rr_interval_sim_cfg);
-        ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-    }
-}
-
-
-/**@brief Function for handling the Sensor Contact Detected timer timeout.
- *
- * @details This function will be called each time the Sensor Contact Detected timer expires.
- *
- * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
- *                       app_start_timer() call to the timeout handler.
- */
-static void sensor_contact_detected_timeout_handler(void * p_context)
-{
-    static bool sensor_contact_detected = false;
-
-    UNUSED_PARAMETER(p_context);
-
-    sensor_contact_detected = !sensor_contact_detected;
-    ble_hrs_sensor_contact_detected_update(&m_hrs, sensor_contact_detected);
-}
-
-
 /**@brief Function for the Timer initialization.
  *
  * @details Initializes the timer module. This creates and starts application timers.
@@ -392,27 +245,6 @@ static void timers_init(void)
 
     // Initialize timer module.
     err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-
-    // Create timers.
-    err_code = app_timer_create(&m_battery_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                battery_level_meas_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_create(&m_heart_rate_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                heart_rate_meas_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_create(&m_rr_interval_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                rr_interval_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_create(&m_sensor_contact_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                sensor_contact_detected_timeout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -461,7 +293,7 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
                      p_evt->params.att_mtu_effective);
     }
 
-    ble_hrs_on_gatt_evt(&m_hrs, p_evt);
+    ble_motion_on_gatt_evt(&m_motion, p_evt);
 }
 
 
@@ -493,108 +325,33 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
  */
 static void services_init(void)
 {
-    ret_code_t         err_code;
-    ble_hrs_init_t     hrs_init;
-    ble_bas_init_t     bas_init;
-    ble_dis_init_t     dis_init;
+    ret_code_t err_code;
+    ble_motion_init_t motion_init;
+    ble_bas_init_t bas_init;
+    ble_dis_init_t dis_init;
     nrf_ble_qwr_init_t qwr_init = {0};
-    uint8_t            body_sensor_location;
 
-    // Initialize Queued Write Module.
-    qwr_init.error_handler = nrf_qwr_error_handler;
+    memset(&motion_init, 0, sizeof(motion_init));
 
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize Heart Rate Service.
-    body_sensor_location = BLE_HRS_BODY_SENSOR_LOCATION_FINGER;
+    motion_init.command_handler = ble_motion_command_handler;
+    motion_init.evt_handler = ble_motion_evt_handler;
 
-    memset(&hrs_init, 0, sizeof(hrs_init));
+    // Here the sec level for the Motion Service can be changed/increased.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&motion_init.motion_motionm_attr_md.cccd_write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&motion_init.motion_motionm_attr_md.write_perm);
 
-    hrs_init.evt_handler                 = NULL;
-    hrs_init.is_sensor_contact_supported = true;
-    hrs_init.p_body_sensor_location      = &body_sensor_location;
-
-    // Here the sec level for the Heart Rate Service can be changed/increased.
-    hrs_init.hrm_cccd_wr_sec = SEC_OPEN;
-    hrs_init.bsl_rd_sec      = SEC_OPEN;
-
-    err_code = ble_hrs_init(&m_hrs, &hrs_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize Battery Service.
-    memset(&bas_init, 0, sizeof(bas_init));
-
-    bas_init.evt_handler          = NULL;
-    bas_init.support_notification = true;
-    bas_init.p_report_ref         = NULL;
-    bas_init.initial_batt_level   = 100;
-
-    // Here the sec level for the Battery Service can be changed/increased.
-    bas_init.bl_rd_sec        = SEC_OPEN;
-    bas_init.bl_cccd_wr_sec   = SEC_OPEN;
-    bas_init.bl_report_rd_sec = SEC_OPEN;
-
-    err_code = ble_bas_init(&m_bas, &bas_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize Device Information Service.
-    memset(&dis_init, 0, sizeof(dis_init));
-
-    ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, (char *)MANUFACTURER_NAME);
-
-    dis_init.dis_char_rd_sec = SEC_OPEN;
-
-    err_code = ble_dis_init(&dis_init);
+    err_code = ble_motion_init(&m_motion, &motion_init);
     APP_ERROR_CHECK(err_code);
 }
-
-
-/**@brief Function for initializing the sensor simulators.
- */
-static void sensor_simulator_init(void)
-{
-    m_battery_sim_cfg.min          = MIN_BATTERY_LEVEL;
-    m_battery_sim_cfg.max          = MAX_BATTERY_LEVEL;
-    m_battery_sim_cfg.incr         = BATTERY_LEVEL_INCREMENT;
-    m_battery_sim_cfg.start_at_max = true;
-
-    sensorsim_init(&m_battery_sim_state, &m_battery_sim_cfg);
-
-    m_heart_rate_sim_cfg.min          = MIN_HEART_RATE;
-    m_heart_rate_sim_cfg.max          = MAX_HEART_RATE;
-    m_heart_rate_sim_cfg.incr         = HEART_RATE_INCREMENT;
-    m_heart_rate_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_heart_rate_sim_state, &m_heart_rate_sim_cfg);
-
-    m_rr_interval_sim_cfg.min          = MIN_RR_INTERVAL;
-    m_rr_interval_sim_cfg.max          = MAX_RR_INTERVAL;
-    m_rr_interval_sim_cfg.incr         = RR_INTERVAL_INCREMENT;
-    m_rr_interval_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_rr_interval_sim_state, &m_rr_interval_sim_cfg);
-}
-
 
 /**@brief Function for starting application timers.
  */
 static void application_timers_start(void)
 {
-    ret_code_t err_code;
 
-    // Start application timers.
-    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_start(m_heart_rate_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_start(m_rr_interval_timer_id, RR_INTERVAL_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_start(m_sensor_contact_timer_id, SENSOR_CONTACT_DETECTED_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -643,7 +400,7 @@ static void conn_params_init(void)
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = m_hrs.hrm_handles.cccd_handle;
+    cp_init.start_on_notify_cccd_handle    = m_motion.motionm_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
@@ -659,18 +416,7 @@ static void conn_params_init(void)
  */
 static void sleep_mode_enter(void)
 {
-    ret_code_t err_code;
 
-    err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-    APP_ERROR_CHECK(err_code);
-
-    // Prepare wakeup buttons.
-    err_code = bsp_btn_ble_sleep_mode_prepare();
-    APP_ERROR_CHECK(err_code);
-
-    // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -716,8 +462,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
 
-            sds_motion_start();
-
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
@@ -734,9 +478,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_INFO("Disconnected, reason %d.",
                           p_ble_evt->evt.gap_evt.params.disconnected.reason);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-
-            sds_motion_stop();
-
             break;
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -980,6 +721,150 @@ static void idle_state_handle(void)
     }
 }
 
+
+/**@brief Function for handling BLE Motion Commands.
+ *
+ * @param[in]   p_command   BLE command structure.
+ */
+static void ble_motion_command_handler(sds_command_t * p_command) {
+    NRF_LOG_INFO("Motion Command Event. Opcode: 0x%x", p_command->opcode);
+	
+    sds_return_t err_code;
+	
+    static motion_rate_t motion_rate;
+    static sds_session_destination_t session_destination;
+    static session_info_t session_info;
+	
+    // Turn off all LEDS 
+    bsp_board_leds_off();  // YUSUF
+	
+	//const uint8_t resp_arg_len = 4;	
+    switch (p_command->opcode)
+    {
+        case GET_SAMPLE_RATE:
+            NRF_LOG_DEBUG("Command Call: GET_SAMPLE_RATE.");
+            CHECK_ARGLEN(0);		
+            motion_rate = sds_motion_get_rate();  			
+            ble_motion_command_response_send(&m_motion, p_command->opcode, 1, &motion_rate);			
+            break;	
+
+        case SET_SAMPLE_RATE:
+            NRF_LOG_DEBUG("Command Call: SET_SAMPLE_RATE.");
+            CHECK_ARGLEN(1);       
+            motion_rate = (motion_rate_t) p_command -> p_args[0];		
+            sds_motion_set_rate(motion_rate);	
+            ble_motion_command_response_send(&m_motion, p_command->opcode, 0, NULL);          
+            break;
+			
+        case RUN_MOTION_CAL:
+            NRF_LOG_DEBUG("Command Call: RUN_MOTION_CAL.");
+            CHECK_ARGLEN(0);		
+            ble_motion_command_response_send(&m_motion, p_command->opcode, 0, NULL);					
+            sds_motion_run_calibration();
+            break;
+
+        case START_SESSION:
+            NRF_LOG_DEBUG("Command Call: START_SESSION.");			
+            CHECK_ARGLEN(1);
+
+            /* decode session destination argument */
+            session_destination = (sds_session_destination_t) p_command -> p_args[0];
+
+            /* get motion session info */
+            get_session_info(&session_info);
+		
+            /* check for valid argument */
+            if (session_destination > MAX_SESSION_VAL) {
+                ble_motion_command_error_send(&m_motion, p_command->opcode, SDS_INVALID_ARG);                
+            }
+            else {
+                cb.session_dest = session_destination;
+            }
+			
+            /* if starting a memory session, prep the memory. Note: the session start memory event will start the memory */
+            if (session_destination == SESSION_TO_MEMORY || session_destination == SESSION_TO_MEMORY_AND_CENTRAL) {              
+                sds_mem_start_session(&session_info);
+            }    
+            else {
+                /* if starting a central session only, start sampling immediately */
+                sds_motion_start();
+            }
+               
+			/* Send response notificaiton with session info data */
+			ble_motion_command_response_send(&m_motion, p_command->opcode, sizeof(session_info_t), (uint8_t *) &session_info);						
+			break;
+        
+        case STOP_SESSION:
+            NRF_LOG_DEBUG("Command Call: STOP_SESSION.");			
+            CHECK_ARGLEN(0);
+        
+			/* Stops a session. */
+            cb.session_dest = SESSION_IDLE;
+			sds_motion_stop();
+            sds_mem_stop_session();
+                    
+			ble_motion_command_response_send(&m_motion, p_command->opcode, 0, NULL);						
+			break;
+
+        case START_STREAM:
+            NRF_LOG_DEBUG("Command Call: START_STREAM.");			
+
+            CHECK_ARGLEN(0);
+            
+            /* Start a memory stream. Memory command handler will begin sample requests */
+            err_code = sds_mem_start_stream(&session_info);
+            if (err_code) {
+                ble_motion_command_error_send(&m_motion, p_command->opcode, err_code);   
+                break;
+            }
+            //app_sched_event_put(NULL, 0, stream_samples);    
+            //ble_motion_command_response_send(&m_motion, p_command->opcode, sizeof(session_info_t), (uint8_t *) &session_info);						
+            //break;
+            
+        case STOP_STREAM:
+            NRF_LOG_DEBUG("Command Call: STOP_STREAM.");			
+            CHECK_ARGLEN(0);
+        
+            err_code = sds_mem_stop_stream();
+            if (err_code) {
+                ble_motion_command_error_send(&m_motion, p_command->opcode, err_code);
+                break;
+            }
+                    
+            ble_motion_command_response_send(&m_motion, p_command->opcode, 0, NULL);						
+            break;
+             
+        default:
+            NRF_LOG_WARNING("Unhandled Command");
+            ble_motion_command_error_send(&m_motion, p_command->opcode, SDS_UNHANDLED_COMMAND);
+            break;
+    }
+}
+
+/**@brief Function for handling BLE events.
+ *
+ * @param[in]   p_ble_evt   Bluetooth stack event.
+ */
+static void ble_motion_evt_handler(ble_motion_evt_type_t evt_type) 
+{
+	NRF_LOG_DEBUG("BLE Motion Evt Handler");
+	//#if SAMPLE_ON_CCCD_WRITE
+	switch (evt_type) {
+            case BLE_MOTION_EVT_NOTIFICATION_ENABLED:
+                cb.session_dest = SESSION_TO_CENTRAL;
+                sds_motion_start();
+                break;
+            case BLE_MOTION_EVT_NOTIFICATION_DISABLED:
+                cb.session_dest = SESSION_IDLE;
+                sds_motion_stop();
+                break;
+	}
+	//#else
+	return;
+	//#endif
+}
+
+
 /**@brief Function for handling the Motion sample measurements.
  *
  * @details This function will be called each time a sample is generate by the sds motion module
@@ -999,7 +884,7 @@ static void motion_sample_handler(void * p_context)
     /* If appropriate sample destination pass to ble motion service*/ 
     if (cb.session_dest == SESSION_TO_CENTRAL || cb.session_dest == SESSION_TO_MEMORY_AND_CENTRAL) {
         if (cb.connection_status == CONNECTED) {
-            //err_code = ble_motion_data_send(&m_motion, p_motion_sample);	
+            err_code = ble_motion_data_send(&m_motion, p_motion_sample);	
         }
     
         if (err_code == NRF_ERROR_RESOURCES) {
@@ -1045,7 +930,6 @@ int main(void)
     gatt_init();
     advertising_init();
     services_init();
-    sensor_simulator_init();
     conn_params_init();
     peer_manager_init();
 

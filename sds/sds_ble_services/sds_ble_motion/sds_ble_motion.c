@@ -190,15 +190,15 @@ static void on_write(ble_motion_t * p_motion, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 	
-	NRF_LOG_DEBUG("Write Event.")
+    NRF_LOG_DEBUG("Write Event.")
 	
-	if (p_evt_write->handle == p_motion->motionm_handles.cccd_handle)
+    if (p_evt_write->handle == p_motion->motionm_handles.cccd_handle)
     {
         on_motionm_cccd_write(p_motion, p_evt_write);
     }
     else if (p_evt_write->handle == p_motion->motionm_handles.value_handle)
     {
-		on_motion_command(p_motion, p_evt_write);
+        on_motion_command(p_motion, p_evt_write);
     }	
 	
 }
@@ -207,6 +207,8 @@ static void on_write(ble_motion_t * p_motion, ble_evt_t const * p_ble_evt)
 void ble_motion_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ble_motion_t * p_motion = (ble_motion_t *) p_context;
+
+    NRF_LOG_INFO("event: %d", p_ble_evt->header.evt_id);
 
     switch (p_ble_evt->header.evt_id)
     {
@@ -220,6 +222,9 @@ void ble_motion_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GATTS_EVT_WRITE:
             on_write(p_motion, p_ble_evt);
+            break;
+
+        case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
             break;
 
         default:

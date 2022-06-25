@@ -100,7 +100,13 @@ void sds_mem_init(memory_init_s * p_memory_init) {
     NRF_LOG_INFO("Initializing Memory.");    
     
     nrf_drv_qspi_config_t config = NRF_DRV_QSPI_DEFAULT_CONFIG;
-    
+    config.pins.sck_pin = BSP_QSPI_SCK_PIN;
+    config.pins.csn_pin = BSP_QSPI_CSN_PIN;
+    config.pins.io1_pin = BSP_QSPI_IO0_PIN;
+    config.pins.io2_pin = BSP_QSPI_IO1_PIN;
+    config.pins.io2_pin = BSP_QSPI_IO2_PIN;
+    config.pins.io3_pin = BSP_QSPI_IO3_PIN;
+
     cb.event_callback = p_memory_init->event_callback;
     cb.memory_state = SDS_MEMORY_MODE_IDLE;
     cb.m_finished = false;
