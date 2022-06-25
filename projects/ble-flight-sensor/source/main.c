@@ -48,8 +48,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "twi_api.h"
-#include "imu_api.h"
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_sdm.h"
@@ -84,6 +82,16 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+//sds
+#include "sds_twi.h"
+#include "sds_motion.h"
+#include "sds_ble_motion.h"
+#include "sds_config.h"
+#include "sds_clock.h"
+#include "sds_ble_uuid.h"
+#include "sds_memory.h"
+#include "sds_log_config.h"
+#include "sds_error.h"
 
 #define DEVICE_NAME                         "FlightSensor"                          /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                   "Flight Sensor"                         /**< Manufacturer. Will be passed to Device Information Service. */
@@ -133,6 +141,17 @@
 
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
+typedef enum {
+	DISCONNECTED,
+	CONNECTED,
+} connection_status_t;
+
+typedef struct {
+	sds_session_destination_t session_dest;
+	connection_status_t connection_status;
+	volatile bool streaming;
+    volatile bool sd_buffer_full;
+} main_control_block_t;
 
 BLE_HRS_DEF(m_hrs);                                                 /**< Heart rate service instance. */
 BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
@@ -161,6 +180,7 @@ static ble_uuid_t m_adv_uuids[] =                                   /**< Univers
     {BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_UUID_TYPE_BLE}
 };
 
+static main_control_block_t cb; /**< Control block for main. */
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -695,6 +715,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
+
+            sds_motion_start();
+
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
@@ -711,6 +734,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_INFO("Disconnected, reason %d.",
                           p_ble_evt->evt.gap_evt.params.disconnected.reason);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+
+            sds_motion_stop();
+
             break;
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -954,12 +980,60 @@ static void idle_state_handle(void)
     }
 }
 
+/**@brief Function for handling the Motion sample measurements.
+ *
+ * @details This function will be called each time a sample is generate by the sds motion module
+ *
+ * @param[in] p_context  Pointer used for passing pointer to motion sample
+ */
+
+static void motion_sample_handler(void * p_context)
+{	
+    ret_code_t      err_code = NRF_SUCCESS;
+    UNUSED_PARAMETER(p_context);
+
+    motion_sample_t * p_motion_sample;
+    p_motion_sample = p_context;
+    NRF_LOG_DEBUG("Motion Handler Call Event: %d", p_motion_sample->event);
+            
+    /* If appropriate sample destination pass to ble motion service*/ 
+    if (cb.session_dest == SESSION_TO_CENTRAL || cb.session_dest == SESSION_TO_MEMORY_AND_CENTRAL) {
+        if (cb.connection_status == CONNECTED) {
+            //err_code = ble_motion_data_send(&m_motion, p_motion_sample);	
+        }
+    
+        if (err_code == NRF_ERROR_RESOURCES) {
+                /* Occurs when too many samples are queued in Softdevice. Reduce sample rate to avoid */ 
+            NRF_LOG_ERROR("ERROR 19 [NRF_ERROR_RESOURCES]");
+        }
+        else if (err_code == NRF_ERROR_INVALID_STATE) {
+                /* Occurs when notification is sent before central has configured CCCD to enable notifications */ 
+            NRF_LOG_ERROR("ERROR 12 [NRF_ERROR_INVALID_STATE]");	
+        }
+        else {
+            APP_ERROR_CHECK(err_code);		
+        }	
+    }
+
+    /* If appropriate sample destination pass to memory */ 	
+    if (cb.session_dest == SESSION_TO_MEMORY || cb.session_dest == SESSION_TO_MEMORY_AND_CENTRAL) {
+        //err_code = sds_mem_save_motion_data(p_motion_sample);
+        //APP_ERROR_CHECK(err_code);
+    }
+}
+
 
 /**@brief Function for application main entry.
  */
 int main(void)
 {
     bool erase_bonds;
+
+    const motion_init_t motion_init = {
+            .event_callback = motion_sample_handler,
+            .motion_rate = SDS_DEFAULT_MOTION_RATE,
+            .motion_mode = SDS_MOTION_CONFIG_MODE,
+    };
 
     // Initialize.
     log_init();
@@ -975,10 +1049,16 @@ int main(void)
     conn_params_init();
     peer_manager_init();
 
+    sds_twi_init();
+    sds_clock_init();
+    sds_motion_init(&motion_init);
+
+    //nrf_pwr_mgmt_init();
+
     // Start execution.
     NRF_LOG_INFO("Flight Sensor Started.");
-    application_timers_start();
-    advertising_start(erase_bonds);
+    //application_timers_start();
+    advertising_start(false);
 
     // Enter main loop.
     for (;;)
