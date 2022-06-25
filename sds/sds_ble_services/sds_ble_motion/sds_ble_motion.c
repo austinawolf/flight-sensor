@@ -129,7 +129,6 @@ static void on_motion_command(ble_motion_t * p_motion, ble_gatts_evt_write_t con
 		return;
 	}
 	
-	
 	/* send command structure for main to handle */
 	p_motion->command_handler(&command);
 	return;
@@ -463,10 +462,6 @@ uint32_t ble_motion_data_send(ble_motion_t * p_motion, motion_sample_t * p_motio
 			}
 			NRF_LOG_DEBUG("Compass notification Send");
 		}
-		
-		
-
-
     }
     else
     {
