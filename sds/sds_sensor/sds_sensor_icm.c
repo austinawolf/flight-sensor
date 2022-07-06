@@ -114,13 +114,15 @@ void sds_sensor_init(motion_data_flags_t data_flags, void (*motion_callback) (vo
 	/* Setup sensor output config */
 	cb.data_flags = data_flags;	
 	cb.rate = 1;
-    cb.motion_callback = motion_callback;
+        cb.motion_callback = motion_callback;
 	
 	/* Setup accel and gyro mounting matrix and associated angle for current board */
 	inv_set_chip_to_body_axis_quaternion(ACCEL_GYRO_ORIENTATION, 0.0);
 	result = inv_initialize_lower_driver(SERIAL_INTERFACE_I2C, 0);
 	APP_ERROR_CHECK(result);
 	inv_set_slave_compass_id(0x24);
+
+        inv_set_gyro_fullscale(3);
 	
 }
 
