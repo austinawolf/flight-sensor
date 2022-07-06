@@ -790,9 +790,9 @@ static void ble_motion_command_handler(sds_command_t * p_command) {
                 sds_motion_start();
             }
                
-			/* Send response notificaiton with session info data */
-			ble_motion_command_response_send(&m_motion, p_command->opcode, sizeof(session_info_t), (uint8_t *) &session_info);						
-			break;
+            /* Send response notificaiton with session info data */
+            ble_motion_command_response_send(&m_motion, p_command->opcode, sizeof(session_info_t), (uint8_t *) &session_info);						
+            break;
         
         case STOP_SESSION:
             NRF_LOG_DEBUG("Command Call: STOP_SESSION.");			
@@ -915,9 +915,9 @@ int main(void)
     bool erase_bonds;
 
     const motion_init_t motion_init = {
-            .event_callback = motion_sample_handler,
-            .motion_rate = SDS_DEFAULT_MOTION_RATE,
-            .motion_mode = SDS_MOTION_CONFIG_MODE,
+        .event_callback = motion_sample_handler,
+        .motion_rate = SDS_DEFAULT_MOTION_RATE,
+        .motion_mode = SDS_MOTION_CONFIG_MODE,
     };
 
     // Initialize.
@@ -941,6 +941,7 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Flight Sensor Started.");
+
     //application_timers_start();
     advertising_start(false);
 
