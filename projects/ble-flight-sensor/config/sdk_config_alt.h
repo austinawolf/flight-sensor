@@ -1,9 +1,0 @@
-#ifndef SDK_CONFIG_ALT_H
-#define SDK_CONFIG_ALT_H
-
-#define FDS_VIRTUAL_PAGES_RESERVED 0
-#define BLE_HRS_ENABLED 1
-#define BLE_LBS_ENABLED 1
-#define NRF_SORTLIST_ENABLED 1
-
-#endif
