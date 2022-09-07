@@ -66,7 +66,7 @@
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 
-BLE_HRS_DEF(m_hrs);                                                 /**< Heart rate service instance. */
+BLE_IMU_DEF(m_imu);                                                 /**< Heart rate service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
@@ -171,7 +171,7 @@ static void heart_rate_meas_timeout_handler(void * p_context)
     heart_rate = 69u;
 
     cnt++;
-    err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
+    err_code = ble_imu_sample_send(&m_imu, heart_rate);
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != NRF_ERROR_RESOURCES) &&
@@ -179,7 +179,7 @@ static void heart_rate_meas_timeout_handler(void * p_context)
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
        )
     {
-        APP_ERROR_HANDLER(err_code);
+        LOG_ERROR("ble_imu_sample_send failed, err: %d", err_code);
     }
 }
 
@@ -247,7 +247,7 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
                      p_evt->params.att_mtu_effective);
     }
 
-    ble_hrs_on_gatt_evt(&m_hrs, p_evt);
+    ble_imu_on_gatt_evt(&m_imu, p_evt);
 }
 
 
@@ -279,39 +279,24 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
  */
 static void services_init(void)
 {
-    ret_code_t         err_code;
-    ble_hrs_init_t     hrs_init;
-    ble_dis_init_t     dis_init;
+    ret_code_t         err_code = {0};
+    ble_imu_init_t     imu_init = {0};
+    ble_dis_init_t     dis_init = {0};
     nrf_ble_qwr_init_t qwr_init = {0};
-    uint8_t            body_sensor_location;
 
     // Initialize Queued Write Module.
     qwr_init.error_handler = nrf_qwr_error_handler;
-
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize Heart Rate Service.
-    body_sensor_location = 3;
-
-    memset(&hrs_init, 0, sizeof(hrs_init));
-
-    hrs_init.evt_handler                 = NULL;
-    hrs_init.is_sensor_contact_supported = true;
-    hrs_init.p_body_sensor_location      = &body_sensor_location;
-
-    // Here the sec level for the Heart Rate Service can be changed/increased.
-    hrs_init.hrm_cccd_wr_sec = SEC_OPEN;
-    hrs_init.bsl_rd_sec      = SEC_OPEN;
-
-    err_code = ble_hrs_init(&m_hrs, &hrs_init);
+    // Initialize IMU Service.
+    imu_init.evt_handler = NULL;
+    err_code = ble_imu_init(&m_imu, &imu_init);
     APP_ERROR_CHECK(err_code);
 
     // Initialize Device Information Service.
     memset(&dis_init, 0, sizeof(dis_init));
-
     ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, (char *)MANUFACTURER_NAME);
-
     dis_init.dis_char_rd_sec = SEC_OPEN;
 
     err_code = ble_dis_init(&dis_init);
@@ -375,7 +360,7 @@ static void conn_params_init(void)
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = m_hrs.hrm_handles.cccd_handle;
+    cp_init.start_on_notify_cccd_handle    = m_imu.command_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
