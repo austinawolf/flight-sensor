@@ -4,15 +4,12 @@
  * @brief
  */
 
-#ifndef IMU_COMMAND_TYPES_H_
-#define IMU_COMMAND_TYPES_H_
+#ifndef COMMAND_TYPES_H_
+#define COMMAND_TYPES_H_
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
 
 #define COMMAND_PREAMBLE    (0xAA)
@@ -43,7 +40,7 @@ typedef enum
 typedef struct
 {
     uint8_t asdf;
-} command_params_start_t;
+} __attribute__((packed)) command_params_start_t;
 
 /**
  * @brief 
@@ -57,7 +54,7 @@ typedef struct
     {
         command_params_start_t start;
     } params;
-} imu_command_t;
+} __attribute__((packed)) command_t;
 
 /**
  * @brief 
@@ -66,7 +63,7 @@ typedef struct
 typedef struct
 {
     uint32_t asdf;
-} response_params_get_status_t;
+} __attribute__((packed)) response_params_get_status_t;
 
 /**
  * @brief 
@@ -75,7 +72,7 @@ typedef struct
 typedef struct
 {
     status_e status;
-} response_params_error_t;
+} __attribute__((packed)) response_params_error_t;
 
 /**
  * @brief 
@@ -90,6 +87,6 @@ typedef struct
         response_params_get_status_t get_status;
         response_params_error_t error;
     } params;
-} imu_response_t;
+} __attribute__((packed)) response_t;
 
 #endif

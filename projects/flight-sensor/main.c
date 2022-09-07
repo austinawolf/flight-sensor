@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "nrf_ble_lesc.h"
 #include "ble_helper.h"
+#include "state_machine.h"
 
 
 /**@brief Function for handling the idle state (main loop).
@@ -35,6 +36,7 @@ int main(void)
     // Initialize.
     logger_create();
     ble_helper_create();
+    state_machine_create();
 
     LOG_INFO("Flight Sensor Started.");
 

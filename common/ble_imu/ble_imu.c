@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ble_srv_common.h"
 #include "logger.h"
-#include "imu_command_handler.h"
+#include "command_handler.h"
 #include "status.h"
 
 
@@ -30,7 +30,7 @@ static void on_disconnect(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 }
 
 
-static uint32_t _send_command_response(ble_imu_t * p_imu, imu_response_t *response, uint16_t len)
+static uint32_t _send_command_response(ble_imu_t * p_imu, response_t *response, uint16_t len)
 {
     uint32_t err_code;
 
@@ -94,14 +94,14 @@ static void on_command_cccd_write(ble_imu_t * p_imu, ble_gatts_evt_write_t const
  */
 static void on_command_value_write(ble_imu_t * p_imu, ble_gatts_evt_write_t const * p_evt_write)
 {
-    imu_command_t *command = (imu_command_t *) p_evt_write->data;
-    imu_response_t response = {0};
+    command_t *command = (command_t *) p_evt_write->data;
+    response_t response = {0};
     uint16_t response_len = 0u;
 
-    imu_command_handler_process(command, 
-                                p_evt_write->len, 
-                                &response, 
-                                &response_len);
+    command_handler_process(command, 
+                            p_evt_write->len, 
+                            &response, 
+                            &response_len);
     if (response_len != 0)
     {
         _send_command_response(p_imu, &response, response_len);

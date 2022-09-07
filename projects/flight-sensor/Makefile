@@ -4,15 +4,16 @@ OUTPUT_DIRECTORY := _build
 
 COMMON_ROOT := ./../../common
 SDK_ROOT := ./../../nRF5_SDK
-PROJ_DIR := ./
-SOURCE_ROOT := $(PROJ_DIR)source/
+PROJ_DIR := .
+SOURCE_ROOT := $(PROJ_DIR)/source
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
   LINKER_SCRIPT  := ble_app_hrs_gcc_nrf52.ld
 
 # Source files common to all targets
 SRC_FILES += \
-  $(SOURCE_ROOT)/imu_command_handler/imu_command_handler.c \
+  $(SOURCE_ROOT)/state_machine/state_machine.c \
+  $(SOURCE_ROOT)/command_handler/command_handler.c \
   $(COMMON_ROOT)/ble_helper/ble_helper.c \
   $(COMMON_ROOT)/logger/logger.c \
   $(COMMON_ROOT)/ble_imu/ble_imu.c \
@@ -138,7 +139,8 @@ SRC_FILES += \
 
 # Include folders common to all targets
 INC_FOLDERS += \
-  $(SOURCE_ROOT)/imu_command_handler/ \
+  $(SOURCE_ROOT)/state_machine/ \
+  $(SOURCE_ROOT)/command_handler/ \
   $(COMMON_ROOT)/ \
   $(COMMON_ROOT)/logger \
   $(COMMON_ROOT)/ble_helper \
