@@ -9,6 +9,7 @@
 #include "nrf_ble_lesc.h"
 #include "ble_helper.h"
 #include "state_machine.h"
+#include "imu.h"
 
 
 /**@brief Function for handling the idle state (main loop).
@@ -29,6 +30,11 @@ static void idle_state_handle(void)
 }
 
 
+static void _imu_sample_callback(imu_sample_t *sample)
+{
+    LOG_INFO("Sample ready");
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -37,8 +43,11 @@ int main(void)
     logger_create();
     ble_helper_create();
     state_machine_create();
+    imu_create();
 
     LOG_INFO("Flight Sensor Started.");
+
+    imu_register_sample_callback(_imu_sample_callback);
 
     // Enter main loop.
     for (;;)

@@ -17,6 +17,8 @@ SRC_FILES += \
   $(COMMON_ROOT)/ble_helper/ble_helper.c \
   $(COMMON_ROOT)/logger/logger.c \
   $(COMMON_ROOT)/ble_imu/ble_imu.c \
+  $(COMMON_ROOT)/imu/imu_simulated.c \
+  $(COMMON_ROOT)/timestamp/timestamp.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/libraries/bsp/bsp.c \
   $(SDK_ROOT)/components/libraries/bsp/bsp_btn_ble.c \
@@ -145,6 +147,8 @@ INC_FOLDERS += \
   $(COMMON_ROOT)/logger \
   $(COMMON_ROOT)/ble_helper \
   $(COMMON_ROOT)/ble_imu \
+  $(COMMON_ROOT)/imu \
+  $(COMMON_ROOT)/timestamp \
   $(SDK_ROOT)/components/nfc/ndef/generic/message \
   $(SDK_ROOT)/components/nfc/t2t_lib \
   $(SDK_ROOT)/components/nfc/t4t_parser/hl_detection_procedure \

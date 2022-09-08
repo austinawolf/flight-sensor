@@ -12,10 +12,10 @@
 #include "status.h"
 
 
-#define COMMAND_PREAMBLE    (0xAA)
-#define RESPONSE_PREAMBLE    (0xBB)
+#define COMMAND_PREAMBLE        (0xAA)
+#define RESPONSE_PREAMBLE       (0xBB)
 
-#define HEADER_LENGTH       (sizeof(uint8_t) + sizeof(command_code_e))
+#define HEADER_LENGTH           (sizeof(uint8_t) + sizeof(command_code_e))
 
 
 /**

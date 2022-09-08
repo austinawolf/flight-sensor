@@ -6,6 +6,7 @@
 #include "state_machine.h"
 #include "status.h"
 #include "logger.h"
+#include "imu.h"
 
 
 typedef enum
@@ -77,6 +78,17 @@ static state_e _idle_process(event_t *event)
     {
         case EVENT_START_SAMPLING:
         {
+            imu_config_t config = 
+            {
+                .rate = event->start_sampling.rate,
+                .flags = event->start_sampling.flags,
+            };
+
+            status_e status = imu_start(&config);
+            if (status != STATUS_OK)
+            {
+                LOG_ERROR("imu_start failed, err: %d", status);
+            }
             next = STATE_SAMPLING;
             break;
         }
@@ -101,6 +113,11 @@ static state_e _sampling_process(event_t *event)
     {
         case EVENT_STOP_SAMPLING:
         {
+            status_e status = imu_stop();
+            if (status != STATUS_OK)
+            {
+                LOG_ERROR("imu_stop failed, err: %d", status);
+            }
             next = STATE_IDLE;
             break;
         }

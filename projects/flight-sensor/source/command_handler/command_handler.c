@@ -60,8 +60,8 @@ static void _start_sampling(command_t *command, uint16_t command_len, response_t
         .start_sampling = 
         {
             .rate = 0,
-            .flags = 0,
-            .destination = 0,
+            .flags = 0b11111,
+            .destination = 0b11,
             .time = 0,
         }
     };
