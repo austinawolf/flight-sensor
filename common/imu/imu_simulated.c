@@ -5,6 +5,7 @@
  */
 #include "imu.h"
 #include "app_timer.h"
+#include "timestamp.h"
 
 
 APP_TIMER_DEF(m_sample_timer_id);
@@ -16,6 +17,10 @@ APP_TIMER_DEF(m_sample_timer_id);
  */
 static imu_sample_callback_t _sample_callback = NULL;
 
+/**
+ * @brief 
+ * 
+ */
 static imu_sample_flags_e _flags = 0u;
 
 /**
@@ -34,7 +39,7 @@ static void sampling_timer_timeout_handler(void * p_context)
 
     imu_sample_t sample = 
     {
-        .timestamp = 0u,
+        .timestamp = timestamp_get(),
         .accel = {0, 1, 2},
         .gyro = {3, 4, 5},
         .compass = {6, 7, 8},
@@ -52,7 +57,6 @@ static void sampling_timer_timeout_handler(void * p_context)
  */
 status_e imu_create(void)
 {
-        // Create timers.
     uint32_t err_code = app_timer_create(&m_sample_timer_id,
                                             APP_TIMER_MODE_REPEATED,
                                             sampling_timer_timeout_handler);
@@ -115,7 +119,7 @@ status_e imu_stop(void)
  */
 status_e imu_sample_read(imu_sample_t *sample)
 {
-    sample->timestamp = 0;
+    sample->timestamp = timestamp_get();
     sample->accel[0] = 1;
     sample->accel[1] = 2;
     sample->accel[2] = 3;

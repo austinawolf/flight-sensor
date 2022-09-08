@@ -10,6 +10,7 @@
 #include "ble_helper.h"
 #include "state_machine.h"
 #include "imu.h"
+#include "timestamp.h"
 
 
 /**@brief Function for handling the idle state (main loop).
@@ -32,7 +33,7 @@ static void idle_state_handle(void)
 
 static void _imu_sample_callback(imu_sample_t *sample)
 {
-    LOG_INFO("Sample ready");
+    LOG_INFO("New sample @ %d ms", sample->timestamp);
 }
 
 /**@brief Function for application main entry.
@@ -44,6 +45,7 @@ int main(void)
     ble_helper_create();
     state_machine_create();
     imu_create();
+    timestamp_create();
 
     LOG_INFO("Flight Sensor Started.");
 
