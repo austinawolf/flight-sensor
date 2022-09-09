@@ -15,6 +15,10 @@
 #include "bsp_btn_ble.h"
 #include "app_timer.h"
 #include "command_handler.h"
+#include "app_scheduler.h"
+
+
+#define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
 
 
 static status_e _get_status(void)
@@ -34,7 +38,7 @@ static status_e _start_sampling(imu_sample_rate_e rate, uint8_t flags, uint8_t d
             .time = sampling_time,
         }
     };
-    state_machine_process(&event);
+    state_machine_add_event(&event);
 
     return STATUS_OK;
 }
@@ -45,7 +49,7 @@ static status_e _stop_sampling(void)
     {
         .event = EVENT_STOP_SAMPLING,
     };
-    state_machine_process(&event);
+    state_machine_add_event(&event);
 
     return STATUS_OK;
 }
@@ -56,7 +60,7 @@ static status_e _start_playback(void)
     {
         .event = EVENT_START_PLAYBACK,
     };
-    state_machine_process(&event);
+    state_machine_add_event(&event);
 
     return STATUS_OK;
 }
@@ -67,7 +71,7 @@ static status_e _stop_playback(void)
     {
         .event = EVENT_STOP_PLAYBACK,
     };
-    state_machine_process(&event);
+    state_machine_add_event(&event);
 
     return STATUS_OK;
 }
@@ -78,27 +82,9 @@ static status_e _calibrate(void)
     {
         .event = EVENT_CALIBRATE,
     };
-    state_machine_process(&event);
+    state_machine_add_event(&event);
 
     return STATUS_OK;
-}
-
-
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-static void idle_state_handle(void)
-{
-    ret_code_t err_code;
-
-    err_code = nrf_ble_lesc_request_handler();
-    APP_ERROR_CHECK(err_code);
-
-    if (NRF_LOG_PROCESS() == false)
-    {
-        nrf_pwr_mgmt_run();
-    }
 }
 
 static void _imu_sample_callback(imu_sample_t *sample)
@@ -106,6 +92,55 @@ static void _imu_sample_callback(imu_sample_t *sample)
     LOG_INFO("New sample @ %d ms", sample->timestamp);
 
     ble_helper_sample_send(sample);
+}
+
+/**@brief Function for putting the chip into sleep mode.
+ *
+ * @note This function will not return.
+ */
+static void sleep_mode_enter(void)
+{
+    ret_code_t err_code;
+
+    err_code = bsp_indication_set(BSP_INDICATE_IDLE);
+    APP_ERROR_CHECK(err_code);
+
+    // Prepare wakeup buttons.
+    err_code = bsp_btn_ble_sleep_mode_prepare();
+    APP_ERROR_CHECK(err_code);
+
+    // Go to system-off mode (this function will not return; wakeup will cause a reset).
+    err_code = sd_power_system_off();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+static void _ble_helper_event_handler(ble_helper_event_e event)
+{
+    uint32_t err_code = 0u;
+
+    switch (event)
+    {
+        case BLE_HELPER_EVENT_IDLE:
+            sleep_mode_enter();
+            break;
+        case BLE_HELPER_EVENT_ADVERTISING:
+            err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+            APP_ERROR_CHECK(err_code);
+            break;
+        case BLE_HELPER_EVENT_CONNECTED:
+            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
+            APP_ERROR_CHECK(err_code);
+            break;
+        case BLE_HELPER_EVENT_DISCONNECTED:
+        {
+            event_t event = {.event = EVENT_DISCONNECTED};
+            state_machine_add_event(&event);
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 static void initialize(void)
@@ -149,7 +184,8 @@ int main(void)
     // Initialize.
     logger_create();
     initialize();
-    ble_helper_create();
+    APP_SCHED_INIT(0, MAX_APP_SCHEDULER_QUEUE_SIZE);
+    ble_helper_create(_ble_helper_event_handler);
     state_machine_create();
     imu_create();
     timestamp_create();
@@ -161,9 +197,14 @@ int main(void)
     ble_helper_advertising_start(false);
 
     // Enter main loop.
-    for (;;)
+    while (true)
     {
-        idle_state_handle();
+        app_sched_execute();
+
+        if (NRF_LOG_PROCESS() == false)
+        {
+            nrf_pwr_mgmt_run();
+        }
     }
 }
 

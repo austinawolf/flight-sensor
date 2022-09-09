@@ -19,6 +19,7 @@ typedef enum
     EVENT_STOP_SAMPLING,
     EVENT_START_PLAYBACK,
     EVENT_STOP_PLAYBACK,
+    EVENT_DISCONNECTED,
     EVENT_CALIBRATE,
     EVENT_CLEAR_ERROR,
 } event_e;
@@ -48,6 +49,6 @@ void state_machine_create(void);
  * 
  * @param event 
  */
-void state_machine_process(event_t *event);
+void state_machine_add_event(event_t *event);
 
 #endif

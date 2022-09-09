@@ -73,12 +73,25 @@ BLE_ADVERTISING_DEF(m_advertising);                                 /**< Adverti
 
 static uint16_t m_conn_handle         = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
 
+static ble_helper_event_handler_t _event_handler = NULL;
 
 static ble_uuid_t m_adv_uuids[] =                                   /**< Universally unique service identifiers. */
 {
     {BLE_UUID_IMU_SERVICE,           BLE_UUID_TYPE_BLE},
 };
 
+
+/**
+ * @brief 
+ * 
+ */
+static void _on_event(ble_helper_event_e event)
+{
+    if (_event_handler != NULL)
+    {
+        _event_handler(event);
+    }
+}
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -284,28 +297,6 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-static void sleep_mode_enter(void)
-{
-    ret_code_t err_code;
-
-    err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-    APP_ERROR_CHECK(err_code);
-
-    // Prepare wakeup buttons.
-    err_code = bsp_btn_ble_sleep_mode_prepare();
-    APP_ERROR_CHECK(err_code);
-
-    // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
-}
-
-
 /**@brief Function for handling advertising events.
  *
  * @details This function will be called for advertising events which are passed to the application.
@@ -314,25 +305,19 @@ static void sleep_mode_enter(void)
  */
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
-    ret_code_t err_code;
-
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
             LOG_INFO("Fast advertising.");
-            err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-            APP_ERROR_CHECK(err_code);
+            _on_event(BLE_HELPER_EVENT_ADVERTISING);
             break;
-
         case BLE_ADV_EVT_IDLE:
-            sleep_mode_enter();
+            _on_event(BLE_HELPER_EVENT_IDLE);
             break;
-
         default:
             break;
     }
 }
-
 
 /**@brief Function for handling BLE events.
  *
@@ -347,12 +332,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
             LOG_INFO("Connected.");
-            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
-            APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
-
             if (false)
             {
                 err_code = pm_conn_secure(p_ble_evt->evt.gap_evt.conn_handle, false);
@@ -361,12 +343,15 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                     APP_ERROR_CHECK(err_code);
                 }
             }
+
+            _on_event(BLE_HELPER_EVENT_CONNECTED);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             LOG_INFO("Disconnected, reason %d.",
                           p_ble_evt->evt.gap_evt.params.disconnected.reason);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            _on_event(BLE_HELPER_EVENT_DISCONNECTED);
             break;
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -518,7 +503,7 @@ static void advertising_init(void)
  * 
  * @return status_e 
  */
-status_e ble_helper_create(void)
+status_e ble_helper_create(ble_helper_event_handler_t event_handler)
 {
     // Initialize.
     ble_stack_init();
@@ -528,6 +513,8 @@ status_e ble_helper_create(void)
     advertising_init();
     conn_params_init();
     peer_manager_init();
+
+    _event_handler = event_handler;
 
     return STATUS_OK;
 }
