@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
+#include "imu.h"
 
 
 typedef enum
@@ -18,6 +19,7 @@ typedef enum
     EVENT_STOP_SAMPLING,
     EVENT_START_PLAYBACK,
     EVENT_STOP_PLAYBACK,
+    EVENT_CALIBRATE,
     EVENT_CLEAR_ERROR,
 } event_e;
 
@@ -26,9 +28,8 @@ typedef struct
     event_e event;
     union {
         struct {
-            uint8_t rate;
+            imu_sample_rate_e rate;
             uint8_t flags;
-            uint8_t destination;
             uint8_t time;
         } start_sampling;
     };

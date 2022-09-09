@@ -7,6 +7,7 @@
 #include "ble_srv_common.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_ble_gatt.h"
+#include "imu.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,7 +127,7 @@ void ble_imu_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
  *
  * @return      NRF_SUCCESS on success, otherwise an error code.
  */
-uint32_t ble_imu_sample_send(ble_imu_t * p_imu, uint16_t heart_rate);
+uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample);
 
 #ifdef __cplusplus
 }

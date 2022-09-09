@@ -27,6 +27,7 @@ typedef struct
 } command_processor_t;
 
 
+
 static void _load_error_response(response_t *response, uint16_t *response_len, status_e status)
 {
     response->preamble = RESPONSE_PREAMBLE;
@@ -37,95 +38,27 @@ static void _load_error_response(response_t *response, uint16_t *response_len, s
     return;
 }
 
-static void _get_status(command_t *command, uint16_t command_len, response_t *response, uint16_t *reponse_len)
+static void _load_success_response(command_code_e command, response_t *response, uint16_t *response_len)
 {
-    if (command_len != HEADER_LENGTH)
+    response->preamble = RESPONSE_PREAMBLE;
+    response->command = command;
+    if (*response_len == 0)
     {
-        return;
+        *response_len = sizeof(HEADER_LENGTH);
     }
 
-    LOG_INFO("Get status");
+    return;
 }
 
-static void _start_sampling(command_t *command, uint16_t command_len, response_t *response, uint16_t *reponse_len)
-{
-    if (command_len != (HEADER_LENGTH + sizeof(command->params.start)))
-    {
-        return;
-    }
-
-    event_t event = 
-    {
-        .event = EVENT_START_SAMPLING,
-        .start_sampling = 
-        {
-            .rate = 0,
-            .flags = 0b11111,
-            .destination = 0b11,
-            .time = 0,
-        }
-    };
-    state_machine_process(&event);
-}
-
-static void _stop_sampling(command_t *command, uint16_t command_len, response_t *response, uint16_t *reponse_len)
-{
-    if (command_len != HEADER_LENGTH)
-    {
-        return;
-    }
-
-    event_t event = 
-    {
-        .event = EVENT_STOP_SAMPLING,
-    };
-    state_machine_process(&event);
-}
-
-static void _start_playback(command_t *command, uint16_t command_len, response_t *response, uint16_t *reponse_len)
-{
-    if (command_len != HEADER_LENGTH)
-    {
-        return;
-    }
-
-    event_t event = 
-    {
-        .event = EVENT_START_PLAYBACK,
-    };
-    state_machine_process(&event);
-}
-
-static void _stop_playback(command_t *command, uint16_t command_len, response_t *response, uint16_t *reponse_len)
-{
-    if (command_len != HEADER_LENGTH)
-    {
-        return;
-    }
-
-    event_t event = 
-    {
-        .event = EVENT_STOP_PLAYBACK,
-    };
-    state_machine_process(&event);
-}
-
-
-static command_processor_t _processors[COMMAND_CODE_MAX_VALUE] = 
-{
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_GET_STATUS, _get_status),
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_START_SAMPLING, _start_sampling),
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_STOP_SAMPLING, _stop_sampling),
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_START_PLAYBACK, _start_playback),
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_STOP_PLAYBACK, _stop_playback),
-    DEFINE_COMMAND_PROCESSOR(COMMAND_CODE_ERROR, NULL),
-};
+static command_handler_callbacks_t _callbacks = {0};
 
 /**
  * @see command_handler.h
  */
 status_e command_handler_process(command_t *command, uint16_t command_len, response_t *response, uint16_t *response_len)
 {
+    uint32_t status = STATUS_ERROR_INVALID_VALUE;
+
     if (command_len > sizeof(command_t))
     {
         _load_error_response(response, response_len, STATUS_ERROR_INVALID_LENGTH);
@@ -144,14 +77,65 @@ status_e command_handler_process(command_t *command, uint16_t command_len, respo
         return STATUS_OK;
     }
 
-    command_processor_t processor = _processors[command->command];
-    if (processor.callback == NULL)
+    switch (command->command)
     {
-        _load_error_response(response, response_len, STATUS_ERROR_INVALID_VALUE);
-        return STATUS_OK;
+        case COMMAND_CODE_GET_STATUS:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.get_status();
+            }
+            break;
+        case COMMAND_CODE_START_SAMPLING:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.start_sampling(command->params.start.rate, 
+                                                    command->params.start.flags,
+                                                    command->params.start.destination,
+                                                    command->params.start.sampling_time);
+            }
+            break;        
+        case COMMAND_CODE_STOP_SAMPLING:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.stop_sampling();
+            }            
+            break;  
+        case COMMAND_CODE_START_PLAYBACK:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.start_playback();
+            }            
+            break;
+        case COMMAND_CODE_STOP_PLAYBACK:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.stop_playback();
+            }            
+            break;
+        case COMMAND_CODE_CALIBRATE:
+            if (_callbacks.start_sampling != NULL)
+            {
+                status = _callbacks.calibrate();
+            }            
+            break;
+        default:
+            break;
     }
 
-    processor.callback(command, command_len, response, response_len);
+    if (status == STATUS_OK)
+    {
+        _load_success_response(command->command, response, response_len);
+    }
+    else
+    {
+        _load_error_response(response, response_len, status);
+    }
 
     return STATUS_OK;
+}
+
+
+void command_handler_register_callbacks(const command_handler_callbacks_t *callbacks)
+{
+    memcpy(&_callbacks, callbacks, sizeof(command_handler_callbacks_t));
 }

@@ -228,9 +228,21 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
 }
 
 
-uint32_t ble_imu_sample_send(ble_imu_t * p_imu, uint16_t heart_rate)
+static void _encode_sample(const imu_sample_t *sample, uint8_t *buffer, uint16_t *len)
+{
+    memcpy(&buffer[0], &sample->timestamp, sizeof(sample->timestamp));
+    memcpy(&buffer[4], sample->accel, sizeof(sample->accel));
+    memcpy(&buffer[10], sample->accel, sizeof(sample->gyro));
+
+    *len = 16;
+}
+
+uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
 {
     uint32_t err_code;
+    uint8_t encoded_sample[20];
+    uint16_t len;
+    uint16_t hvx_len;
 
     // Send value if connected and notifying
     if (p_imu->conn_handle == BLE_CONN_HANDLE_INVALID)
@@ -238,20 +250,16 @@ uint32_t ble_imu_sample_send(ble_imu_t * p_imu, uint16_t heart_rate)
         return NRF_ERROR_INVALID_STATE;
     }
 
-    uint8_t                encoded_hrm[20];
-    uint16_t               len;
-    uint16_t               hvx_len;
-    ble_gatts_hvx_params_t hvx_params;
-
-    len = 5;
-    memset(&hvx_params, 0, sizeof(hvx_params));
-
+    _encode_sample(sample, encoded_sample, &len);
     hvx_len = len;
-    hvx_params.handle = p_imu->data_handles.value_handle;
-    hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
-    hvx_params.offset = 0;
-    hvx_params.p_len  = &hvx_len;
-    hvx_params.p_data = encoded_hrm;
+    
+    ble_gatts_hvx_params_t hvx_params = {
+        .handle = p_imu->data_handles.value_handle,
+        .type = BLE_GATT_HVX_NOTIFICATION,
+        .offset = 0,
+        .p_len = &hvx_len,
+        .p_data = (uint8_t *) encoded_sample,
+    };
 
     err_code = sd_ble_gatts_hvx(p_imu->conn_handle, &hvx_params);
     if ((err_code == NRF_SUCCESS) && (hvx_len != len))

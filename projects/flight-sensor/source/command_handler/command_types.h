@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
+#include "imu.h"
 
 
 #define COMMAND_PREAMBLE        (0xAA)
@@ -29,6 +30,7 @@ typedef enum
     COMMAND_CODE_STOP_SAMPLING,
     COMMAND_CODE_START_PLAYBACK,
     COMMAND_CODE_STOP_PLAYBACK,
+    COMMAND_CODE_CALIBRATE,
     COMMAND_CODE_ERROR,
     COMMAND_CODE_MAX_VALUE,
 } command_code_e;
@@ -39,7 +41,10 @@ typedef enum
  */
 typedef struct
 {
-    uint8_t asdf;
+    imu_sample_rate_e rate;
+    uint8_t flags;
+    uint8_t destination;
+    uint8_t sampling_time;
 } __attribute__((packed)) command_params_start_t;
 
 /**
