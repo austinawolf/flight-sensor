@@ -40,10 +40,10 @@ static void sampling_timer_timeout_handler(void * p_context)
     imu_sample_t sample = 
     {
         .timestamp = timestamp_get(),
-        .accel = {0, 1, 2},
-        .gyro = {3, 4, 5},
-        .compass = {6, 7, 8},
-        .quat = {9, 10, 11, 12},
+        .accel = {1, 2, 3},
+        .gyro = {4, 5, 6},
+        .compass = {7, 8, 9},
+        .quat = {10, 11, 12, 13},
         .flags = _flags,
     };
 

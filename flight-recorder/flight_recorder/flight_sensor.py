@@ -17,6 +17,7 @@ class FlightSensor:
     def initialize(self):
         # setup ble device
         self.ble_device.event_logger.suppress(nrf_events.GapEvtAdvReport)
+        self.ble_device.configure(att_mtu_max_size=247)
         self.ble_device.open()
         self.ble_device.scanner.set_default_scan_params(timeout_seconds=10)
 

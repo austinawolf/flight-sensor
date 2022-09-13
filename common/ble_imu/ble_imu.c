@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "command_handler.h"
 #include "status.h"
+#include "ble_imu_types.h"
 
 
 /**@brief Function for handling the Connect event.
@@ -211,10 +212,10 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
     // Add heart rate measurement characteristic
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid              = BLE_UUID_DATA_CHAR;
-    add_char_params.max_len           = 20;
+    add_char_params.max_len           = IMU_DATA_SIZE;
     add_char_params.init_len          = 0;
     add_char_params.p_init_value      = NULL;
-    add_char_params.is_var_len        = true;
+    add_char_params.is_var_len        = false;
     add_char_params.char_props.notify = 1;
     add_char_params.cccd_write_access = SEC_OPEN;
 
@@ -228,21 +229,33 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
 }
 
 
-static void _encode_sample(const imu_sample_t *sample, uint8_t *buffer, uint16_t *len)
+/**
+ * @brief 
+ * 
+ * @param sample 
+ * @param data 
+ */
+static void _encode_sample(const imu_sample_t *sample, ble_imu_data_t *data)
 {
-    memcpy(&buffer[0], &sample->timestamp, sizeof(sample->timestamp));
-    memcpy(&buffer[4], sample->accel, sizeof(sample->accel));
-    memcpy(&buffer[10], sample->accel, sizeof(sample->gyro));
+    // static uint16_t sample_index = 0u;
 
-    *len = 16;
+    data->field.preamble = IMU_DATA_PREAMBLE;
+    data->field.timestamp = sample->timestamp;
+    data->field.flags = sample->flags;
+    // data->field.index = sample_index++;
+
+    memcpy(&data->field.accel, &sample->accel, sizeof(sample->accel));
+    memcpy(&data->field.gyro, &sample->gyro, sizeof(sample->gyro));
+    memcpy(&data->field.compass, &sample->compass, sizeof(sample->compass));
+    memcpy(&data->field.quat, &sample->quat, sizeof(sample->quat));
 }
 
 uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
 {
-    uint32_t err_code;
-    uint8_t encoded_sample[20];
-    uint16_t len;
-    uint16_t hvx_len;
+    uint32_t err_code = 0;
+    ble_imu_data_t buffer;
+    uint16_t len = IMU_DATA_SIZE;
+    uint16_t hvx_len = len;
 
     // Send value if connected and notifying
     if (p_imu->conn_handle == BLE_CONN_HANDLE_INVALID)
@@ -250,15 +263,14 @@ uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
         return NRF_ERROR_INVALID_STATE;
     }
 
-    _encode_sample(sample, encoded_sample, &len);
-    hvx_len = len;
+    _encode_sample(sample, &buffer);
     
     ble_gatts_hvx_params_t hvx_params = {
         .handle = p_imu->data_handles.value_handle,
         .type = BLE_GATT_HVX_NOTIFICATION,
         .offset = 0,
         .p_len = &hvx_len,
-        .p_data = (uint8_t *) encoded_sample,
+        .p_data = (uint8_t *) &buffer.bytes,
     };
 
     err_code = sd_ble_gatts_hvx(p_imu->conn_handle, &hvx_params);

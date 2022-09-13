@@ -40,7 +40,8 @@ class Client(object):
     def _on_data_recieved(self, characteristic, event_args):
         logger.info("Data Received: [{}]".format(binascii.hexlify(event_args.value)))
         try:
-            pass  # self._response = Data.from_bytes(event_args.value)
+            data = Data.from_bytes(event_args.value)
+            logger.info(data)
         except Exception as e:
             logger.error("Failed to decode data, stream: [{}]".format(binascii.hexlify(event_args.value)))
             logger.exception(e)
@@ -61,10 +62,16 @@ class Client(object):
         # Initiate the connection and wait for it to finish
         logger.info("Found match: connecting to address {}".format(target_address))
         self._peer = self._ble_device.connect(target_address).wait()
+
         if not self._peer:
             logger.warning("Timed out connecting to device")
             return
         logger.info("Connected, conn_handle: {}".format(self._peer.conn_handle))
+
+        logger.info("Update MTU")
+        # self._peer.preferred_mtu_size = 46
+        x = self._peer.exchange_mtu(mtu_size=43)
+        x.wait()
 
         # Wait up to 10 seconds for service discovery to complete
         _, event_args = self._peer.discover_services().wait(10, exception_on_timeout=False)
