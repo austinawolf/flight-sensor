@@ -5,7 +5,14 @@ from blatann import BleDevice
 from blatann.event_type import EventSource, Event
 from blatann.event_args import DecodedReadCompleteEventArgs, ReadCompleteEventArgs, GattOperationCompleteReason
 from blatann.nrf import nrf_events
-from blatann.uuid import Uuid128
+from blatann.uuid import Uuid128, Uuid16
+
+from flight_recorder.commands.calibrate import CalibrateCommand
+from flight_recorder.commands.start_playback import StartPlaybackCommand
+from flight_recorder.commands.start_sampling import StartSamplingCommand
+from flight_recorder.commands.stop_playback import StopPlaybackCommand
+from flight_recorder.commands.stop_sampling import StopSamplingCommand
+from flight_recorder.data import Data
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +22,8 @@ class Client(object):
 
     class UUIDs:
         IMU_SERVICE = Uuid128("924418ff-c32c-40ca-b9a9-d9024bf8b003")
-        COMMAND_CHARACTERISTIC = Uuid128("d9541770-a7c0-4a17-a548-1e0fa159ad01")
-        DATA_CHARACTERISTIC = Uuid128("43192aff-8264-41bb-b660-678c8ec91201")
+        COMMAND_CHARACTERISTIC = Uuid16("1770")  # Uuid128("d9541770-a7c0-4a17-a548-1e0fa159ad01")
+        DATA_CHARACTERISTIC = Uuid16("2aff")  # Uuid128("43192aff-8264-41bb-b660-678c8ec91201")
 
     def __init__(self, ble_device: BleDevice):
         """
@@ -30,11 +37,15 @@ class Client(object):
         self._command_characteristic = None
         self._data_characteristic = None
 
-    def initialize(self):
-        self._ble_device.event_logger.suppress(nrf_events.GapEvtAdvReport)
-        self._ble_device.open()
-        self._ble_device.scanner.set_default_scan_params(timeout_seconds=10)
+    def _on_data_recieved(self, characteristic, event_args):
+        logger.info("Data Received: [{}]".format(binascii.hexlify(event_args.value)))
+        try:
+            pass  # self._response = Data.from_bytes(event_args.value)
+        except Exception as e:
+            logger.error("Failed to decode data, stream: [{}]".format(binascii.hexlify(event_args.value)))
+            logger.exception(e)
 
+    def initialize(self):
         logger.info("Scanning for '{}'".format(self.DEVICE_NAME))
 
         target_address = None
@@ -61,71 +72,28 @@ class Client(object):
 
         # Find Characteristics
         self._service = self._peer.database.find_service(self.UUIDs.IMU_SERVICE)
-        self._command_characteristic = self._peer.database.find_characteristic(self.UUIDs.DATA_CHARACTERISTIC)
-        self._data_characteristic = self._peer.database.find_characteristic(self.UUIDs.COMMAND_CHARACTERISTIC)
+        self._command_characteristic = self._peer.database.find_characteristic(self.UUIDs.COMMAND_CHARACTERISTIC)
+        self._data_characteristic = self._peer.database.find_characteristic(self.UUIDs.DATA_CHARACTERISTIC)
+
+        # Subscribe to Data Characteristic
+        self._data_characteristic.subscribe(self._on_data_recieved)
 
     def deinitialize(self):
         logger.info("Disconnecting from peripheral")
         if self._peer:
             self._peer.disconnect().wait()
 
-    @property
-    def on_data_received(self):  # -> Event[MotionClient, DecodedReadCompleteEventArgs[int]]:
-        return self._on_data
-
-    @property
-    def on_response_received(self):  # -> Event[MotionClient, DecodedReadCompleteEventArgs[int]]:
-        return self._on_response
-
-    @property
-    def can_enable_notifications(self) -> bool:
-        return self._data_characteristic.subscribable and self._command_characteristic.subscribable
-
-    def enable_notifications(self):
-        self._command_characteristic.subscribe(self._on_data_notification)
-        self._data_characteristic.subscribe(self._on_data_notification)
-
-    def disable_notifications(self):
-        self._command_characteristic.subscribe(self._on_data_notification)
-        self._data_characteristic.subscribe(self._on_data_notification)
-
-    def _on_data_notification(self, characteristic, event_args):
-        decoded_value = None
-        try:
-            pass
-        except Exception as e:
-            logger.error("Failed to decode Battery Level, stream: [{}]".format(binascii.hexlify(event_args.value)))
-            logger.exception(e)
-
-        decoded_event_args = DecodedReadCompleteEventArgs.from_notification_complete_event_args(event_args, decoded_value)
-
-        data = None #MotionData.from_bytes(decoded_event_args.value)
-        self._on_data.notify(self, data)
-
-    def _on_command_notification(self, characteristic, event_args):
-        decoded_value = None
-        try:
-            pass
-        except Exception as e:
-            logger.error("Failed to decode Battery Level, stream: [{}]".format(binascii.hexlify(event_args.value)))
-            logger.exception(e)
-
-        decoded_event_args = DecodedReadCompleteEventArgs.from_notification_complete_event_args(event_args, decoded_value)
-        response = None # MotionData.from_bytes(decoded_event_args.value)
-
-        self._on_response.notify(self, response)
-
-    def start_sampling(self):
-        pass
+    def start_sampling(self, rate, flags, destination, sampling_time):
+        return StartSamplingCommand(rate, flags, destination, sampling_time).send(self._command_characteristic)
 
     def stop_sampling(self):
-        pass
+        return StopSamplingCommand().send(self._command_characteristic)
 
     def start_playback(self):
-        pass
+        return StartPlaybackCommand().send(self._command_characteristic)
 
     def stop_playback(self):
-        pass
+        return StopPlaybackCommand().send(self._command_characteristic)
 
     def calibrate(self):
-        pass
+        return CalibrateCommand().send(self._command_characteristic)

@@ -44,7 +44,7 @@ static void _load_success_response(command_code_e command, response_t *response,
     response->command = command;
     if (*response_len == 0)
     {
-        *response_len = sizeof(HEADER_LENGTH);
+        *response_len = HEADER_LENGTH;
     }
 
     return;
