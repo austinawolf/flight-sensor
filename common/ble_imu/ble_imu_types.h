@@ -13,7 +13,7 @@
 
 #define IMU_DATA_PREAMBLE     (0xDD)
 
-#define IMU_DATA_SIZE         (40)
+#define IMU_DATA_SIZE         (42)
 
 /**
  * @brief 
@@ -24,14 +24,14 @@ typedef union
     uint8_t bytes[IMU_DATA_SIZE];
     struct __attribute__((packed))
     {   
-        uint32_t timestamp;
         uint8_t preamble;
+        uint16_t index;
+        uint32_t timestamp;
         uint8_t flags;
         int32_t quat[4];
         int16_t gyro[3];
         int16_t accel[3];
         int16_t compass[3];
-        // uint16_t index;
     } field;
 } ble_imu_data_t;
 

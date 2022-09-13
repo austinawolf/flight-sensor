@@ -237,12 +237,12 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
  */
 static void _encode_sample(const imu_sample_t *sample, ble_imu_data_t *data)
 {
-    // static uint16_t sample_index = 0u;
+    static uint16_t sample_index = 0u;
 
     data->field.preamble = IMU_DATA_PREAMBLE;
     data->field.timestamp = sample->timestamp;
     data->field.flags = sample->flags;
-    // data->field.index = sample_index++;
+    data->field.index = sample_index++;
 
     memcpy(&data->field.accel, &sample->accel, sizeof(sample->accel));
     memcpy(&data->field.gyro, &sample->gyro, sizeof(sample->gyro));

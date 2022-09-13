@@ -1,12 +1,8 @@
 import binascii
 import logging
-
 from blatann import BleDevice
-from blatann.event_type import EventSource, Event
-from blatann.event_args import DecodedReadCompleteEventArgs, ReadCompleteEventArgs, GattOperationCompleteReason
-from blatann.nrf import nrf_events
+from blatann.event_type import EventSource
 from blatann.uuid import Uuid128, Uuid16
-
 from flight_recorder.commands.calibrate import CalibrateCommand
 from flight_recorder.commands.start_playback import StartPlaybackCommand
 from flight_recorder.commands.start_sampling import StartSamplingCommand
@@ -17,7 +13,7 @@ from flight_recorder.data import Data
 logger = logging.getLogger(__name__)
 
 
-class Client(object):
+class Client:
     DEVICE_NAME = "Flight Sensor"
 
     class UUIDs:
@@ -38,7 +34,6 @@ class Client(object):
         self._data_characteristic = None
 
     def _on_data_recieved(self, characteristic, event_args):
-        logger.info("Data Received: [{}]".format(binascii.hexlify(event_args.value)))
         try:
             data = Data.from_bytes(event_args.value)
             logger.info(data)
@@ -61,7 +56,9 @@ class Client(object):
 
         # Initiate the connection and wait for it to finish
         logger.info("Found match: connecting to address {}".format(target_address))
-        self._peer = self._ble_device.connect(target_address).wait()
+        waitable = self._ble_device.connect(target_address)
+        self._ble_device.connecting_peripheral.preferred_mtu_size = self._ble_device.max_mtu_size
+        self._peer = waitable.wait()
 
         if not self._peer:
             logger.warning("Timed out connecting to device")
@@ -69,9 +66,7 @@ class Client(object):
         logger.info("Connected, conn_handle: {}".format(self._peer.conn_handle))
 
         logger.info("Update MTU")
-        # self._peer.preferred_mtu_size = 46
-        x = self._peer.exchange_mtu(mtu_size=43)
-        x.wait()
+        self._peer.exchange_mtu(self._peer.max_mtu_size).wait()
 
         # Wait up to 10 seconds for service discovery to complete
         _, event_args = self._peer.discover_services().wait(10, exception_on_timeout=False)
