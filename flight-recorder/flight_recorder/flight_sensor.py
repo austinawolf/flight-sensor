@@ -1,4 +1,6 @@
 import logging
+from enum import Enum
+
 from blatann import BleDevice
 from blatann.nrf import nrf_events
 
@@ -8,6 +10,27 @@ logger = logging.getLogger(__name__)
 
 
 class FlightSensor:
+    class Rate(Enum):
+        RATE_1_HZ = 0
+        RATE_5_HZ = 1
+        RATE_10_HZ = 2
+        RATE_20_HZ = 3
+        RATE_50_HZ = 4
+        RATE_100_HZ = 5
+
+    class Flags:
+        GYRO = (1 << 0)
+        ACCEL = (1 << 1)
+        COMPASS = (1 << 2)
+        QUAT = (1 << 3)
+        IMU = GYRO | ACCEL
+        ALL = IMU | COMPASS | QUAT
+
+    class Destination(Enum):
+        CENTRAL = 0
+        MEMORY = 1
+        BOTH = 2
+
     def __init__(self, port, timeout=10):
         self.port = port
         self.timeout = timeout
@@ -27,8 +50,8 @@ class FlightSensor:
     def deinitialize(self):
         self.client.deinitialize()
 
-    def start_sampling(self, rate, flags, destination, time):
-        response = self.client.start_sampling(rate, flags, destination, time)
+    def start_sampling(self, rate: Rate, flags: int, destination: Destination, time: int):
+        response = self.client.start_sampling(rate.value, flags, destination.value, time)
         if response.is_error:
             raise Exception(response)
 

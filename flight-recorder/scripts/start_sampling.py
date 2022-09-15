@@ -8,8 +8,11 @@ logger = example_utils.setup_logger(level="INFO")
 def main():
     flight_sensor = FlightSensor("COM17")
     flight_sensor.initialize()
-    flight_sensor.start_sampling(0, 0, 0, 0)
-    time.sleep(10)
+    flight_sensor.start_sampling(flight_sensor.Rate.RATE_5_HZ,
+                                 flight_sensor.Flags.ALL,
+                                 flight_sensor.Destination.CENTRAL,
+                                 10)
+    time.sleep(15)
     flight_sensor.stop_sampling()
     flight_sensor.deinitialize()
 

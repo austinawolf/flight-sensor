@@ -44,8 +44,19 @@ status_e imu_create(void)
  * @return status_e 
  */
 status_e imu_start(imu_config_t *config)
-{    
-	icm20948_set_rate(10);
+{   
+	const uint16_t rates[SAMPLE_RATE_MAX_VALUE] = 
+	{
+		[SAMPLE_RATE_1_HZ] 		1,
+		[SAMPLE_RATE_5_HZ] 		5,
+		[SAMPLE_RATE_10_HZ] 	10,
+		[SAMPLE_RATE_20_HZ] 	20,
+		[SAMPLE_RATE_50_HZ] 	50,
+		[SAMPLE_RATE_100_HZ] 	100,
+	};
+
+	icm20948_set_rate(rates[config->rate]);	
+	
 	icm20948_start();
 
     return STATUS_OK;

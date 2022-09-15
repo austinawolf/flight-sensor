@@ -85,7 +85,7 @@ class Client:
         if self._peer:
             self._peer.disconnect().wait()
 
-    def start_sampling(self, rate, flags, destination, sampling_time):
+    def start_sampling(self, rate: int, flags: int, destination: int, sampling_time: int):
         return StartSamplingCommand(rate, flags, destination, sampling_time).send(self._command_characteristic)
 
     def stop_sampling(self):

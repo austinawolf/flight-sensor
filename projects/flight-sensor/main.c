@@ -19,6 +19,9 @@
 #include "twi.h"
 
 
+APP_TIMER_DEF(m_imu_stop_timer_id);
+
+
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
 
 
@@ -40,6 +43,16 @@ static status_e _start_sampling(imu_sample_rate_e rate, uint8_t flags, uint8_t d
         }
     };
     state_machine_add_event(&event);
+
+    if (sampling_time)
+    {
+        uint32_t timeout_ticks = APP_TIMER_TICKS(sampling_time * 1000u);
+        uint32_t err_code = app_timer_start(m_imu_stop_timer_id, timeout_ticks, NULL);
+        if (err_code != NRF_SUCCESS)
+        {
+            return STATUS_ERROR;
+        }
+    }
 
     return STATUS_OK;
 }
@@ -177,6 +190,13 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
     }
 }
 
+static void _imu_stop_timeout_handler(void * p_context)
+{
+    event_t event = {.event = EVENT_STOP_SAMPLING};
+    state_machine_add_event(&event);
+}
+
+
 static void initialize(void)
 {
     ret_code_t err_code;
@@ -198,7 +218,11 @@ static void initialize(void)
     err_code = bsp_btn_ble_init(NULL, &startup_event);
     APP_ERROR_CHECK(err_code);
 
-
+    // Timers
+    err_code = app_timer_create(&m_imu_stop_timer_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                _imu_stop_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for application main entry.
