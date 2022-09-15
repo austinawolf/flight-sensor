@@ -14,9 +14,10 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 # Source files common to all targets
 SRC_FILES += \
   $(PROJ_DIR)/main.c \
-  $(SOURCE_ROOT)/state_machine/state_machine.c \
   $(SOURCE_ROOT)/command_handler/command_handler.c \
   $(SOURCE_ROOT)/ble_helper/ble_helper.c \
+  $(SOURCE_ROOT)/session_manager/session_manager.c \
+  $(SOURCE_ROOT)/session_manager/session_state_machine.c \
   $(COMMON_ROOT)/logger/logger.c \
   $(COMMON_ROOT)/ble_imu/ble_imu.c \
   $(COMMON_ROOT)/icm20948/icm20948.c \
@@ -25,6 +26,7 @@ SRC_FILES += \
   $(COMMON_ROOT)/timestamp/timestamp.c \
   $(COMMON_ROOT)/queue/queue.c \
   $(COMMON_ROOT)/twi/twi.c \
+  $(COMMON_ROOT)/state_machine/state_machine.c \
   $(EXTERNAL_ROOT)/icm20948/common/inv_mems_drv_hook.c \
   $(EXTERNAL_ROOT)/icm20948/dmp3/inv_mems_interface_mapping.c \
   $(EXTERNAL_ROOT)/icm20948/driver/inv_mems_augmented_sensors.c \
@@ -168,7 +170,7 @@ INC_FOLDERS += \
   ./config \
   $(SOURCE_ROOT)/ble_helper \
   $(SOURCE_ROOT)/command_handler/ \
-  $(SOURCE_ROOT)/state_machine/ \
+  $(SOURCE_ROOT)/session_manager/ \
   $(COMMON_ROOT)/ \
   $(COMMON_ROOT)/ble_imu \
   $(COMMON_ROOT)/imu \
@@ -177,6 +179,7 @@ INC_FOLDERS += \
   $(COMMON_ROOT)/queue \
   $(COMMON_ROOT)/timestamp \
   $(COMMON_ROOT)/twi \
+  $(COMMON_ROOT)/state_machine \
   $(EXTERNAL_ROOT)/icm20948/ \
   $(EXTERNAL_ROOT)/icm20948/common \
   $(EXTERNAL_ROOT)/icm20948/dmp3 \

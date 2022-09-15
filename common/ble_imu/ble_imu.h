@@ -43,6 +43,14 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
                      BLE_IMU_BLE_OBSERVER_PRIO,                                                     \
                      ble_imu_on_ble_evt, &_name)
 
+
+/**@brief Heart Rate Service event type. */
+typedef enum
+{
+    BLE_IMU_EVT_NOTIFICATION_ENABLED,   /**< Heart Rate value notification enabled event. */
+    BLE_IMU_EVT_NOTIFICATION_DISABLED   /**< Heart Rate value notification disabled event. */
+} ble_imu_evt_type_t;
+
 /**@brief Heart Rate Service event. */
 typedef struct
 {

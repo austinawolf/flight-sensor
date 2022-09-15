@@ -50,8 +50,6 @@ static void _load_success_response(command_code_e command, response_t *response,
     return;
 }
 
-static command_handler_callbacks_t _callbacks = {0};
-
 /**
  * @see command_handler.h
  */
@@ -80,43 +78,25 @@ status_e command_handler_process(command_t *command, uint16_t command_len, respo
     switch (command->command)
     {
         case COMMAND_CODE_GET_STATUS:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.get_status();
-            }
+            status = session_manager_get_status();
             break;
         case COMMAND_CODE_START_SAMPLING:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.start_sampling(command->params.start.rate, 
+            status = session_manager_start_sampling(command->params.start.rate, 
                                                     command->params.start.flags,
                                                     command->params.start.destination,
                                                     command->params.start.sampling_time);
-            }
             break;        
         case COMMAND_CODE_STOP_SAMPLING:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.stop_sampling();
-            }            
+            status = session_manager_stop_sampling();
             break;  
         case COMMAND_CODE_START_PLAYBACK:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.start_playback();
-            }            
+            status = session_manager_start_playback();           
             break;
         case COMMAND_CODE_STOP_PLAYBACK:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.stop_playback();
-            }            
+            status = session_manager_stop_playback();         
             break;
         case COMMAND_CODE_CALIBRATE:
-            if (_callbacks.start_sampling != NULL)
-            {
-                status = _callbacks.calibrate();
-            }            
+            status = session_manager_calibrate();         
             break;
         default:
             break;
@@ -132,10 +112,4 @@ status_e command_handler_process(command_t *command, uint16_t command_len, respo
     }
 
     return STATUS_OK;
-}
-
-
-void command_handler_register_callbacks(const command_handler_callbacks_t *callbacks)
-{
-    memcpy(&_callbacks, callbacks, sizeof(command_handler_callbacks_t));
 }

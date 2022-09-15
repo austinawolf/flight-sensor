@@ -8,7 +8,7 @@
 #include "logger.h"
 #include "nrf_ble_lesc.h"
 #include "ble_helper.h"
-#include "state_machine.h"
+#include "session_manager.h"
 #include "imu.h"
 #include "timestamp.h"
 #include "ble_helper.h"
@@ -24,122 +24,6 @@ APP_TIMER_DEF(m_imu_stop_timer_id);
 
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
 
-
-static status_e _get_status(void)
-{
-    return STATUS_OK;
-}
-
-static status_e _start_sampling(imu_sample_rate_e rate, uint8_t flags, uint8_t destination, uint8_t sampling_time)
-{
-    event_t event = 
-    {
-        .event = EVENT_START_SAMPLING,
-        .start_sampling = 
-        {
-            .rate = rate,
-            .flags = flags,
-            .time = sampling_time,
-        }
-    };
-    state_machine_add_event(&event);
-
-    if (sampling_time)
-    {
-        uint32_t timeout_ticks = APP_TIMER_TICKS(sampling_time * 1000u);
-        uint32_t err_code = app_timer_start(m_imu_stop_timer_id, timeout_ticks, NULL);
-        if (err_code != NRF_SUCCESS)
-        {
-            return STATUS_ERROR;
-        }
-    }
-
-    return STATUS_OK;
-}
-
-static status_e _stop_sampling(void)
-{
-    event_t event = 
-    {
-        .event = EVENT_STOP_SAMPLING,
-    };
-    state_machine_add_event(&event);
-
-    return STATUS_OK;
-}
-
-static status_e _start_playback(void)
-{
-    event_t event = 
-    {
-        .event = EVENT_START_PLAYBACK,
-    };
-    state_machine_add_event(&event);
-
-    return STATUS_OK;
-}
-
-static status_e _stop_playback(void)
-{
-    event_t event = 
-    {
-        .event = EVENT_STOP_PLAYBACK,
-    };
-    state_machine_add_event(&event);
-
-    return STATUS_OK;
-}
-
-static status_e _calibrate(void)
-{
-    event_t event = 
-    {
-        .event = EVENT_CALIBRATE,
-    };
-    state_machine_add_event(&event);
-
-    return STATUS_OK;
-}
-
-static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
-{
-    (void) p_event_data;
-    (void) event_size;
-
-    bool sample_ready = true;
-    imu_sample_t sample = {0};
-    do 
-    {
-        status_e status = imu_sample_read(&sample, &sample_ready);
-        if (status != STATUS_OK)
-        {
-            LOG_ERROR("imu_sample_read failed, err: %d", status);
-            break;
-        }
-        
-        status = ble_helper_sample_send(&sample);
-        if (status != STATUS_OK)
-        {
-            LOG_ERROR("ble_helper_sample_send failed, err: %d", status);
-            break;
-        }
-
-        break;
-    }
-    while (sample_ready);
-}
-
-static void _imu_sample_callback(void)
-{
-    static volatile uint8_t _samples_ready = 0u;
-
-    _samples_ready++;
-    if (_samples_ready >= 1)
-    {
-        app_sched_event_put(NULL, 0, _imu_read_fifo_handler);
-        _samples_ready = 0u;
-    }
-}
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -181,8 +65,8 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
             break;
         case BLE_HELPER_EVENT_DISCONNECTED:
         {
-            event_t event = {.event = EVENT_DISCONNECTED};
-            state_machine_add_event(&event);
+            // event_t event = {.event = EVENT_DISCONNECTED};
+            // state_machine_add_event(&event);
             break;
         }
         default:
@@ -192,8 +76,8 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
 
 static void _imu_stop_timeout_handler(void * p_context)
 {
-    event_t event = {.event = EVENT_STOP_SAMPLING};
-    state_machine_add_event(&event);
+    // event_t event = {.event = EVENT_STOP_SAMPLING};
+    // state_machine_add_event(&event);
 }
 
 
@@ -229,30 +113,18 @@ static void initialize(void)
  */
 int main(void)
 {
-    const command_handler_callbacks_t callbacks = 
-    {
-        .get_status = _get_status,
-        .start_sampling = _start_sampling,
-        .stop_sampling = _stop_sampling,
-        .start_playback = _start_playback,
-        .stop_playback = _stop_playback,
-        .calibrate = _calibrate,
-    };
-
     // Initialize.
     logger_create();
     initialize();
-    APP_SCHED_INIT(0, MAX_APP_SCHEDULER_QUEUE_SIZE);
+    APP_SCHED_INIT(4, MAX_APP_SCHEDULER_QUEUE_SIZE);
     ble_helper_create(_ble_helper_event_handler);
-    state_machine_create();
+    session_manager_create();
     twi_init();
     imu_create();
     timestamp_create();
-    command_handler_register_callbacks(&callbacks);
 
     LOG_INFO("Flight Sensor Started.");
 
-    imu_register_callback(_imu_sample_callback);
     ble_helper_advertising_start(false);
 
     // Enter main loop.
