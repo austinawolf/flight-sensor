@@ -16,6 +16,7 @@
 #include "app_timer.h"
 #include "command_handler.h"
 #include "app_scheduler.h"
+#include "twi.h"
 
 
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
@@ -187,6 +188,7 @@ int main(void)
     APP_SCHED_INIT(0, MAX_APP_SCHEDULER_QUEUE_SIZE);
     ble_helper_create(_ble_helper_event_handler);
     state_machine_create();
+    twi_init();
     imu_create();
     timestamp_create();
     command_handler_register_callbacks(&callbacks);

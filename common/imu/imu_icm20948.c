@@ -1,38 +1,20 @@
-#include "sds_sensor.h"
-
-#ifdef SENSOR_ICM20948
-
-#include "sds_config.h"
-
-//nrf
-#include "nrf_drv_gpiote.h"
+/**
+ * @file    logger.c
+ * @author  Austin Wolf
+ * @brief
+ */
+#include "imu.h"
+#include "app_timer.h"
+#include "timestamp.h"
 #include "boards.h"
-
-//sds
-#include "sds_motion_types.h"
-#include "sds_clock.h"
-#include "imu_cal.h"
-
-//sds_external
+#include "nrf_drv_twi.h"
+#include "nrf_drv_gpiote.h"
+#include "logger.h"
 #include "inv_mems.h"
+#include "logger.h"
 
 #define BIAS_SET_TO_DMP /* Set bias to DMP rather than offset registers */
 
-#include "sds_log_config.h"
-#define NRF_LOG_MODULE_NAME sensor
-#if SDS_SENSOR_CONFIG_LOG_ENABLED
-#define NRF_LOG_LEVEL SDS_SENSOR_CONFIG_LOG_LEVEL
-#define NRF_LOG_INFO_COLOR SDS_SENSOR_CONFIG_INFO_COLOR
-#define NRF_LOG_DEBUG_COLOR SDS_SENSOR_CONFIG_DEBUG_COLOR
-#else
-#define NRF_LOG_LEVEL       0
-#endif
-#include "nrf_log.h"
-NRF_LOG_MODULE_REGISTER();
-
-
-#define STANDARD_ORIENTATION 1
-#define UPRIGHT_ORIENTATION 2
 
 /* Self Test */
 int a_average[3] = { 0, 0, 0 };
@@ -47,14 +29,8 @@ const unsigned char COMPASS_CHIP_ADDR       = 0x0C; /* Change COMPASS_CHIP_ADDR 
 const unsigned char PRESSURE_CHIP_ADDR      = 0x00; /* Change COMPASS_CHIP_ADDR to 0x0E for other AK09912/09911/09913/8963 */
 long SOFT_IRON_MATRIX[]                     = {1073741824,0,0,0,1073741824,0,0,0,1073741824}; /* Change SOFT_IRON_MATRIX if necessary (q30) */
 
-#if INITIAL_ORIENTATION == STANDARD_ORIENTATION
 signed char ACCEL_GYRO_ORIENTATION[]        = {0,-1,0,1,0,0,0,0,1}; /* Change ACCEL_GYRO_ORIENTATION according to actual mount matrix */
 signed char COMPASS_ORIENTATION[]           = {1,0,0,0,-1,0,0,0,-1}; /* Change COMPASS_ORIENTATION according to actual mount matrix */
-#elif INITIAL_ORIENTATION == UPRIGHT_ORIENTATION
-#error TODO
-#else
-#error Orientation Not Defined
-#endif
 
 const unsigned char ACCEL_GYRO_CHIP_ADDR    = 0x68; /* Change ACCEL_GYRO_CHIP_ADDR if necessary */
 
@@ -82,6 +58,7 @@ static void fifo_handler(void);
 static void pin_interrupt_init(void);
 static void pin_change_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 static void push_sample(void);
+void imu_set_rate(uint32_t sensor_rate);
 
 static void pin_change_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
 
@@ -89,10 +66,7 @@ static void pin_change_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t acti
 }
 
 static void pin_interrupt_init(void) {
-   ret_code_t err_code;
-
-    err_code = nrf_drv_gpiote_init();
-    APP_ERROR_CHECK(err_code);
+    ret_code_t err_code;
 
     nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
 
@@ -102,9 +76,14 @@ static void pin_interrupt_init(void) {
     nrf_drv_gpiote_in_event_enable(SENSOR_TWI_INT, true);	
 }
 
-void sds_sensor_init(motion_data_flags_t data_flags, void (*motion_callback) (void * p_context)) {
-
-	NRF_LOG_INFO("Sensor Initializing.");
+/**
+ * @brief 
+ * 
+ * @return status_e 
+ */
+status_e imu_create(void)
+{
+	LOG_INFO("Sensor Initializing.");
 	
 	inv_error_t result;
 
@@ -112,9 +91,9 @@ void sds_sensor_init(motion_data_flags_t data_flags, void (*motion_callback) (vo
 	pin_interrupt_init();
 
 	/* Setup sensor output config */
-	cb.data_flags = data_flags;	
+	cb.data_flags = 0;	
 	cb.rate = 1;
-    cb.motion_callback = motion_callback;
+    cb.motion_callback = NULL;
 	
 	/* Setup accel and gyro mounting matrix and associated angle for current board */
 	inv_set_chip_to_body_axis_quaternion(ACCEL_GYRO_ORIENTATION, 0.0);
@@ -122,19 +101,29 @@ void sds_sensor_init(motion_data_flags_t data_flags, void (*motion_callback) (vo
 	APP_ERROR_CHECK(result);
 	inv_set_slave_compass_id(0x24);
 
-	sds_sensor_set_rate(1);
+    return STATUS_OK;
 }
 
-void sds_sensor_start(void) {
-
+/**
+ * @brief 
+ * 
+ * @return status_e 
+ */
+status_e imu_start(imu_config_t *config)
+{    
 	/* start orientation */
-	dmp_reset_fifo();
+	inv_error_t err = dmp_reset_fifo();
+	if (err != 0)
+	{
+		LOG_ERROR("dmp_reset_fifo failed, err: %d", err);
+	}
+
+	cb.data_flags = QUATERNION_DATA | IMU_DATA | COMPASS_DATA;
 	
 	/* enable sensors */
 	if (cb.data_flags & QUATERNION_DATA) {
-		inv_enable_sensor(ANDROID_SENSOR_ORIENTATION, 1); //ANDROID_SENSOR_ORIENTATION ANDROID_SENSOR_ROTATION_VECTOR
+		err = inv_enable_sensor(ANDROID_SENSOR_ORIENTATION, 1); //ANDROID_SENSOR_ORIENTATION ANDROID_SENSOR_ROTATION_VECTOR
 	}
-	
 	
 	if (cb.data_flags & IMU_DATA) {
 		inv_enable_sensor(ANDROID_SENSOR_ACCELEROMETER, 1);
@@ -147,11 +136,20 @@ void sds_sensor_start(void) {
 	/* set output rate */
 	inv_reset_dmp_odr_counters();
 	
-	NRF_LOG_INFO("Sensor turned ON");	
+	imu_set_rate(1);
+
+	LOG_INFO("Sensor turned ON");
+
+    return STATUS_OK;
 }
 
-void sds_sensor_stop(void) {
-	
+/**
+ * @brief 
+ * 
+ * @return status_e 
+ */
+status_e imu_stop(void)
+{
 	/* stop orientation */
 	dmp_reset_fifo();
 	
@@ -169,11 +167,35 @@ void sds_sensor_stop(void) {
 		inv_enable_sensor(ANDROID_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 0);	
 	}
 		
-	NRF_LOG_INFO("Sensor turned OFF");
+	LOG_INFO("Sensor turned OFF");
+
+    return STATUS_OK;
 }
 
-void sds_sensor_set_rate(uint32_t sensor_rate) {
-	NRF_LOG_DEBUG("Set Sensor Rate.");
+/**
+ * @brief 
+ * 
+ */
+status_e imu_sample_read(imu_sample_t *sample)
+{
+
+    return STATUS_OK;
+}
+
+/**
+ * @brief 
+ * 
+ */
+status_e imu_register_sample_callback(imu_sample_callback_t callback)
+{
+    //_sample_callback = callback;
+
+    return STATUS_OK;
+}
+
+
+void imu_set_rate(uint32_t sensor_rate) {
+	LOG_INFO("Set Sensor Rate.");
 	
 	/* set output rate */
 	uint16_t rate = sensor_rate;
@@ -198,29 +220,29 @@ void sds_sensor_set_rate(uint32_t sensor_rate) {
 	inv_reset_dmp_odr_counters();
 	
 	inv_get_odr(ANDROID_SENSOR_ORIENTATION, &odr,  ODR_IN_Ms);
-	NRF_LOG_DEBUG("Sample Period = %d ms.", odr);
+	LOG_INFO("Sample Period = %d ms.", odr);
 	
-	dmp_reset_fifo();		
+	dmp_reset_fifo();
 }
 
-sds_return_t sds_sensor_calibrate(void) {
+status_e imu_calibrate(void) {
 	int self_test_result = 0;
 	int dmp_bias[9] = { 0 };
 
-	NRF_LOG_INFO("Selftest...Started");
+	LOG_INFO("Selftest...Started");
 
 	/* Perform self-test */
 	self_test_result = inv_mems_run_selftest();
-	NRF_LOG_INFO("Selftest...Done...Ret=%d", self_test_result);
-	NRF_LOG_INFO("Result: Compass=%s, Accel=%s, Gyro=%s", (self_test_result & 0x04) ? "PASS" : "FAIL", (self_test_result & 0x02) ? "PASS" : "FAIL", (self_test_result & 0x01) ? "PASS" : "FAIL");
-	NRF_LOG_INFO("Accel Average (LSB@FSR 2g)");
-	NRF_LOG_INFO("\tX:%d Y:%d Z:%d\r\n", a_average[0], a_average[1], a_average[2]);
-	NRF_LOG_INFO("Gyro Average (LSB@FSR 250dps)");
-	NRF_LOG_INFO("\tX:%d Y:%d Z:%d", g_average[0], g_average[1], g_average[2]);
+	LOG_INFO("Selftest...Done...Ret=%d", self_test_result);
+	LOG_INFO("Result: Compass=%s, Accel=%s, Gyro=%s", (self_test_result & 0x04) ? "PASS" : "FAIL", (self_test_result & 0x02) ? "PASS" : "FAIL", (self_test_result & 0x01) ? "PASS" : "FAIL");
+	LOG_INFO("Accel Average (LSB@FSR 2g)");
+	LOG_INFO("\tX:%d Y:%d Z:%d\r\n", a_average[0], a_average[1], a_average[2]);
+	LOG_INFO("Gyro Average (LSB@FSR 250dps)");
+	LOG_INFO("\tX:%d Y:%d Z:%d", g_average[0], g_average[1], g_average[2]);
 
 	/* Nothing to do if FAIL on gyro and accel */
 	if ((self_test_result & 0x03) != 0x03)
-		return SDS_ERROR;
+		return STATUS_ERROR;
 
 	/* Handle bias got by self-test */
 	dmp_bias[0] = a_average[0] * (1 << 11);   // Change from LSB to format expected by DMP
@@ -231,25 +253,25 @@ sds_return_t sds_sensor_calibrate(void) {
 	dmp_bias[4] = g_average[1] * (1 << 15) / scale;
 	dmp_bias[5] = g_average[2] * (1 << 15) / scale;
 
-	NRF_LOG_INFO("Factory Cal - Accel DMP biases: \tX:%d Y:%d Z:%d", dmp_bias[0], dmp_bias[1], dmp_bias[2]);
-	NRF_LOG_INFO("Factory Cal - Gyro DMP biases:  \tX:%d Y:%d Z:%d\r\n", dmp_bias[3], dmp_bias[4], dmp_bias[5]);
+	LOG_INFO("Factory Cal - Accel DMP biases: \tX:%d Y:%d Z:%d", dmp_bias[0], dmp_bias[1], dmp_bias[2]);
+	LOG_INFO("Factory Cal - Gyro DMP biases:  \tX:%d Y:%d Z:%d\r\n", dmp_bias[3], dmp_bias[4], dmp_bias[5]);
 	
 	/* Update bias on DMP memory */
 	dmp_set_bias(dmp_bias);
-	NRF_LOG_INFO("\r\nSetting the DMP biases with one-axis factory calibration values...done\r\n");
+	LOG_INFO("\r\nSetting the DMP biases with one-axis factory calibration values...done\r\n");
 	
-	return SDS_SUCCESS;
+	return STATUS_OK;
 }
 
 static void push_sample(void) {
 	/* Push sample to main */	
-	NRF_LOG_DEBUG("Push Sample.");	
-	cb.motion_callback(&motion_sample);
+	LOG_INFO("Push Sample.");	
+	//cb.motion_callback(&motion_sample);
 }
 
 static void fifo_handler(void)
 {
-	NRF_LOG_DEBUG("Fifo handler call.");
+	LOG_INFO("Fifo handler call.");
 	
 	short int_read_back = 0;
 	unsigned short header = 0, header2 = 0;
@@ -279,19 +301,19 @@ static void fifo_handler(void)
 				memset(&motion_sample, 0, sizeof(motion_sample));
 				
 				/* Load timestamp, sample number, and data flags */
-				sds_get_ms(&motion_sample.timestamp);
+				motion_sample.timestamp = timestamp_get();
 				motion_sample.event = sample_number++;
 				motion_sample.data_flags = cb.data_flags;
-				NRF_LOG_DEBUG("Sample Event @ %d ms.", motion_sample.timestamp);
+				LOG_INFO("Sample Event @ %d ms.", motion_sample.timestamp);
 				
 				/* Calc Period for Debugging */
 				// static unsigned long previous;
-				// NRF_LOG_DEBUG("Sample Period=%d", motion_sample.timestamp - previous);
+				// LOG_INFO("Sample Period=%d", motion_sample.timestamp - previous);
 				// previous = motion_sample.timestamp;
 				
 				/* Get Accelerometer Data */
 				if (header & ACCEL_SET) {
-					NRF_LOG_DEBUG("Get Accel.");
+					LOG_INFO("Get Accel.");
 					
 					dmp_get_accel(long_data);
 					
@@ -303,7 +325,7 @@ static void fifo_handler(void)
 					accel_accuracy = inv_get_accel_accuracy();
 					UNUSED_VARIABLE(accel_accuracy);
 					
-					NRF_LOG_DEBUG("Accel: x=%d, y=%d, z=%d", motion_sample.accel[0], motion_sample.accel[1], motion_sample.accel[2]);
+					LOG_INFO("Accel: x=%d, y=%d, z=%d", motion_sample.accel[0], motion_sample.accel[1], motion_sample.accel[2]);
 
 				}
 
@@ -312,7 +334,7 @@ static void fifo_handler(void)
 					signed long  bias_data[3] = { 0 };
 					signed long  raw_data[3] = { 0 };					
 					
-					NRF_LOG_DEBUG("Get Gyro.");										
+					LOG_INFO("Get Gyro.");										
 					
 					/* get raw */
 					dmp_get_raw_gyro(short_data);
@@ -340,23 +362,23 @@ static void fifo_handler(void)
 					gyro_accuracy = inv_get_gyro_accuracy();
 					UNUSED_VARIABLE(gyro_accuracy);
 					
-					NRF_LOG_DEBUG("Gyro: x=%d, y=%d, z=%d", motion_sample.gyro[0], motion_sample.gyro[1], motion_sample.gyro[2]);
+					LOG_INFO("Gyro: x=%d, y=%d, z=%d", motion_sample.gyro[0], motion_sample.gyro[1], motion_sample.gyro[2]);
 				}
 
 				/* Get Cal Compass Data */								
 				if (header & CPASS_CALIBR_SET) {
-					NRF_LOG_DEBUG("Get Cal Compass.");
+					LOG_INFO("Get Cal Compass.");
 					
 					dmp_get_calibrated_compass(long_data);
 					compass_accuracy = inv_get_mag_accuracy();
 					UNUSED_VARIABLE(compass_accuracy);
 					
-					NRF_LOG_DEBUG("Compass: x=%d, y=%d, z=%d", long_data[0], long_data[1], long_data[2]);
+					LOG_INFO("Compass: x=%d, y=%d, z=%d", long_data[0], long_data[1], long_data[2]);
 				}
 
 				/* Get Raw Compass Data */
 				if (header & CPASS_SET) {
-					NRF_LOG_DEBUG("Get Raw Compass.");
+					LOG_INFO("Get Raw Compass.");
 					
 					dmp_get_raw_compass(long_data);
 					//dmp_get_calibrated_compass(long_data);
@@ -366,12 +388,12 @@ static void fifo_handler(void)
 					motion_sample.compass[1] = long_data[1] >> 15;
 					motion_sample.compass[2] = long_data[2] >> 15;
 					
-					NRF_LOG_DEBUG("Compass: x=%d, y=%d, z=%d", motion_sample.compass[0], motion_sample.compass[1], motion_sample.compass[2]);					
+					LOG_INFO("Compass: x=%d, y=%d, z=%d", motion_sample.compass[0], motion_sample.compass[1], motion_sample.compass[2]);					
 				}
 				
 				/* 9axis orientation quaternion sample available from DMP FIFO */
 				if (header & QUAT9_SET) {
-					NRF_LOG_DEBUG("Get Quat9.");
+					LOG_INFO("Get Quat9.");
 					
 					dmp_get_9quaternion(long_quat);
 					rv_accuracy = (int)((float)inv_get_rv_accuracy() / (float)(1ULL << (29)));
@@ -387,10 +409,10 @@ static void fifo_handler(void)
 					//orientationFloat[1] = inv_q16_to_float(orientationQ16[1]);
 					//orientationFloat[2] = inv_q16_to_float(orientationQ16[2]);
 					
-					//NRF_LOG_DEBUG("9-axis Quat: q0=%i,q1=%i,q2=%i,q3=%i, acc=%i",quat[0], quat[1], quat[2], quat[3], rv_accuracy);					
-					//NRF_LOG_RAW_INFO("Euler: " NRF_LOG_FLOAT_MARKER ", ", NRF_LOG_FLOAT(orientationFloat[0]));
-					//NRF_LOG_RAW_INFO(NRF_LOG_FLOAT_MARKER ", ", NRF_LOG_FLOAT(orientationFloat[1]));
-					//NRF_LOG_RAW_INFO(NRF_LOG_FLOAT_MARKER "\r\n", NRF_LOG_FLOAT(orientationFloat[2]));
+					//LOG_INFO("9-axis Quat: q0=%i,q1=%i,q2=%i,q3=%i, acc=%i",quat[0], quat[1], quat[2], quat[3], rv_accuracy);					
+					//LOG_RAW_INFO("Euler: " LOG_FLOAT_MARKER ", ", LOG_FLOAT(orientationFloat[0]));
+					//LOG_RAW_INFO(LOG_FLOAT_MARKER ", ", LOG_FLOAT(orientationFloat[1]));
+					//LOG_RAW_INFO(LOG_FLOAT_MARKER "\r\n", LOG_FLOAT(orientationFloat[2]));
 
 				}
 				
@@ -398,12 +420,12 @@ static void fifo_handler(void)
 
 			}
 			
-			NRF_LOG_DEBUG("Data left in fifo: %d", data_left_in_fifo);
+			LOG_INFO("Data left in fifo: %d", data_left_in_fifo);
 		} while (data_left_in_fifo);
 
 
 		if (int_read_back & BIT_MSG_DMP_INT_3) {
-			NRF_LOG_DEBUG("Step Detected>>>>>>>\r\n");
+			LOG_INFO("Step Detected>>>>>>>\r\n");
 		}
 
 		if (header & PED_STEPDET_SET) {
@@ -412,17 +434,13 @@ static void fifo_handler(void)
 			static unsigned long old_steps;
 			dmp_get_pedometer_num_of_steps(&steps);
 			if (steps != old_steps) {
-				NRF_LOG_DEBUG("\tStep Counter %d\r\n", steps);
+				LOG_INFO("\tStep Counter %d\r\n", steps);
 				old_steps = steps;
 			}
 		}
 
 		if (int_read_back & BIT_MSG_DMP_INT_2) {
-			NRF_LOG_DEBUG(">> SMD Interrupt *********\r\n");
+			LOG_INFO(">> SMD Interrupt *********\r\n");
 		}
-		
-		
 	}
 }
-
-#endif

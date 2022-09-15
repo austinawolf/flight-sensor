@@ -116,6 +116,10 @@ extern "C" {
 #define ARDUINO_A4_PIN              30    // Analog channel 4
 #define ARDUINO_A5_PIN              31    // Analog channel 5
 
+// Board Specific
+#define SENSOR_TWI_SDA		NRF_GPIO_PIN_MAP(0,4) 
+#define SENSOR_TWI_SCL		NRF_GPIO_PIN_MAP(0,26)
+#define SENSOR_TWI_INT		NRF_GPIO_PIN_MAP(0,6)
 
 #ifdef __cplusplus
 }

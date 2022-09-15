@@ -1,6 +1,5 @@
-#ifndef TWI_INTERFACE_H_
-#define TWI_INTERFACE_H_
-
+#ifndef TWI_H_
+#define TWI_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,7 +13,7 @@
  * @details This function will be called once by main application to initialize TWI
  *
  */
-void sds_twi_init (void);
+void twi_init (void);
 
 /**@brief Function for finding TWI slaves.
  *
@@ -22,7 +21,7 @@ void sds_twi_init (void);
  *
  * @returns Address of slave found first. If -1, no TWI slaves were found
  */
-int sds_twi_scan (void);
+int twi_scan (void);
 
 /**@brief Function for writing to a TWI slave
  *
@@ -31,7 +30,7 @@ int sds_twi_scan (void);
  * @param[in] unsigned char  Length of data.
  * @param[in] unsigned char const *  Pointer to data to write.
  */
-int sds_twi_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char const *data);
+int twi_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char const *data);
 
 
 /**@brief Function for reading from a TWI slave
@@ -41,6 +40,6 @@ int sds_twi_write(unsigned char slave_addr, unsigned char reg_addr, unsigned cha
  * @param[in] unsigned char  Length of data.
  * @param[out] unsigned char const *  Pointer to data to read.
  */
-int sds_twi_read(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char *data);
+int twi_read(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char *data);
 
 #endif

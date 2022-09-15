@@ -1,3 +1,6 @@
+#ifdef IMU_SIMULATED
+
+
 /**
  * @file    logger.c
  * @author  Austin Wolf
@@ -148,3 +151,5 @@ status_e imu_register_sample_callback(imu_sample_callback_t callback)
 
     return STATUS_OK;
 }
+
+#endif

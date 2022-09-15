@@ -146,6 +146,14 @@ static state_e _idle_process(event_t *event)
             break;
         
         }
+        case EVENT_CALIBRATE:
+        {
+            status_e status = imu_calibrate();
+            if (status != STATUS_OK)
+            {
+                LOG_ERROR("imu_calibrate failed, err: %d", status);
+            }
+        }
         default:
             break;
     }

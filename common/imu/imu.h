@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
+#include "sds_motion_types.h"
+
 
 /**
  * @brief 
@@ -95,6 +97,12 @@ status_e imu_stop(void);
  * 
  */
 status_e imu_sample_read(imu_sample_t *sample);
+
+/**
+ * @brief 
+ * 
+ */
+status_e imu_calibrate(void);
 
 /**
  * @brief 
