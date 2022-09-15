@@ -19,6 +19,7 @@ SRC_FILES += \
   $(SOURCE_ROOT)/ble_helper/ble_helper.c \
   $(COMMON_ROOT)/logger/logger.c \
   $(COMMON_ROOT)/ble_imu/ble_imu.c \
+  $(COMMON_ROOT)/icm20948/icm20948.c \
   $(COMMON_ROOT)/imu/imu_icm20948.c \
   $(COMMON_ROOT)/imu/imu_simulated.c \
   $(COMMON_ROOT)/timestamp/timestamp.c \
@@ -171,6 +172,7 @@ INC_FOLDERS += \
   $(COMMON_ROOT)/ \
   $(COMMON_ROOT)/ble_imu \
   $(COMMON_ROOT)/imu \
+  $(COMMON_ROOT)/icm20948 \
   $(COMMON_ROOT)/logger \
   $(COMMON_ROOT)/queue \
   $(COMMON_ROOT)/timestamp \

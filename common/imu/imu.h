@@ -10,13 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
-#include "sds_motion_types.h"
 
 
-/**
- * @brief 
- * 
- */
 typedef enum
 {
     SAMPLE_RATE_1_HZ,
@@ -28,10 +23,6 @@ typedef enum
     SAMPLE_RATE_MAX_VALUE,
 } imu_sample_rate_e;
 
-/**
- * @brief 
- * 
- */
 typedef enum
 {
     SAMPLE_FLAG_GYRO = (1 << 0),
@@ -41,10 +32,6 @@ typedef enum
     SAMPLE_FLAG_TIMESTAMP = (1 << 4),
 } imu_sample_flags_e;
 
-/**
- * @brief 
- * 
- */
 typedef struct
 {
 	uint32_t timestamp;
@@ -55,59 +42,25 @@ typedef struct
 	imu_sample_flags_e flags;	
 } imu_sample_t;
 
-/**
- * @brief 
- * 
- */
-typedef void (*imu_sample_callback_t) (imu_sample_t *sample);
+typedef void (*imu_event_callback_t) (void);
 
-/**
- * @brief 
- * 
- */
 typedef struct
 {
     imu_sample_rate_e rate;
     imu_sample_flags_e flags;
 } imu_config_t;
 
-/**
- * @brief 
- * 
- * @return status_e 
- */
+
 status_e imu_create(void);
 
-/**
- * @brief 
- * 
- * @return status_e 
- */
 status_e imu_start(imu_config_t *config);
 
-/**
- * @brief 
- * 
- * @return status_e 
- */
 status_e imu_stop(void);
 
-/**
- * @brief 
- * 
- */
-status_e imu_sample_read(imu_sample_t *sample);
+status_e imu_sample_read(imu_sample_t *sample, bool *sample_ready);
 
-/**
- * @brief 
- * 
- */
 status_e imu_calibrate(void);
 
-/**
- * @brief 
- * 
- */
-status_e imu_register_sample_callback(imu_sample_callback_t callback);
+status_e imu_register_callback(imu_event_callback_t callback);
 
 #endif

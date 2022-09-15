@@ -88,11 +88,44 @@ static status_e _calibrate(void)
     return STATUS_OK;
 }
 
-static void _imu_sample_callback(imu_sample_t *sample)
+static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
 {
-    LOG_INFO("New sample @ %d ms", sample->timestamp);
+    (void) p_event_data;
+    (void) event_size;
 
-    ble_helper_sample_send(sample);
+    bool sample_ready = true;
+    imu_sample_t sample = {0};
+    do 
+    {
+        status_e status = imu_sample_read(&sample, &sample_ready);
+        if (status != STATUS_OK)
+        {
+            LOG_ERROR("imu_sample_read failed, err: %d", status);
+            break;
+        }
+        
+        status = ble_helper_sample_send(&sample);
+        if (status != STATUS_OK)
+        {
+            LOG_ERROR("ble_helper_sample_send failed, err: %d", status);
+            break;
+        }
+
+        break;
+    }
+    while (sample_ready);
+}
+
+static void _imu_sample_callback(void)
+{
+    static volatile uint8_t _samples_ready = 0u;
+
+    _samples_ready++;
+    if (_samples_ready >= 1)
+    {
+        app_sched_event_put(NULL, 0, _imu_read_fifo_handler);
+        _samples_ready = 0u;
+    }
 }
 
 /**@brief Function for putting the chip into sleep mode.
@@ -195,7 +228,7 @@ int main(void)
 
     LOG_INFO("Flight Sensor Started.");
 
-    imu_register_sample_callback(_imu_sample_callback);
+    imu_register_callback(_imu_sample_callback);
     ble_helper_advertising_start(false);
 
     // Enter main loop.

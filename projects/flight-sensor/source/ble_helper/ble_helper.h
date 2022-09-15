@@ -34,6 +34,6 @@ status_e ble_helper_create(ble_helper_event_handler_t event_handler);
 
 void ble_helper_advertising_start(bool erase_bonds);
 
-void ble_helper_sample_send(imu_sample_t *sample);
+status_e ble_helper_sample_send(imu_sample_t *sample);
 
 #endif
