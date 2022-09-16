@@ -19,18 +19,19 @@ typedef enum
     BLE_HELPER_EVENT_ADVERTISING,
     BLE_HELPER_EVENT_CONNECTED,
     BLE_HELPER_EVENT_DISCONNECTED,
+    BLE_HELPER_EVENT_NOTIF_TX_COMPLETE,
 } ble_helper_event_e;
 
-
 typedef void (*ble_helper_event_handler_t) (ble_helper_event_e event);
-
 
 /**
  * @brief 
  * 
  * @return status_e 
  */
-status_e ble_helper_create(ble_helper_event_handler_t event_handler);
+status_e ble_helper_create(void);
+
+status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler);
 
 void ble_helper_advertising_start(bool erase_bonds);
 

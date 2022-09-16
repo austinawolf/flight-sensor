@@ -250,7 +250,7 @@ static void _encode_sample(const imu_sample_t *sample, ble_imu_data_t *data)
     memcpy(&data->field.quat, &sample->quat, sizeof(sample->quat));
 }
 
-uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
+status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
 {
     uint32_t err_code = 0;
     ble_imu_data_t buffer;
@@ -260,7 +260,7 @@ uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
     // Send value if connected and notifying
     if (p_imu->conn_handle == BLE_CONN_HANDLE_INVALID)
     {
-        return NRF_ERROR_INVALID_STATE;
+        return STATUS_ERROR_INVALID_STATE;
     }
 
     _encode_sample(sample, &buffer);
@@ -276,10 +276,18 @@ uint32_t ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
     err_code = sd_ble_gatts_hvx(p_imu->conn_handle, &hvx_params);
     if ((err_code == NRF_SUCCESS) && (hvx_len != len))
     {
-        err_code = NRF_ERROR_DATA_SIZE;
+        err_code = STATUS_ERROR_DATA_SIZE;
+    }
+    else if (err_code == NRF_ERROR_RESOURCES)
+    {
+        err_code = STATUS_ERROR_BUFFER_FULL;
+    }
+    else if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR;
     }
 
-    return err_code;
+    return STATUS_OK;
 }
 
 void ble_imu_on_gatt_evt(ble_imu_t * p_imu, nrf_ble_gatt_evt_t const * p_gatt_evt)

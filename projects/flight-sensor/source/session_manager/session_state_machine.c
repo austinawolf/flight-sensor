@@ -24,6 +24,16 @@ static void _sampling_on_entry(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
 
+    if ((control->destination == SESSION_DESTINATION_MEMORY) || (control->destination == SESSION_DESTINATION_BOTH))
+    {
+        status_e status = sample_store_reset(&control->sample_store);
+        if (status != STATUS_OK)
+        {
+            LOG_ERROR("sample_store_reset failed, err: %d", status);
+            return;
+        }
+    }
+
     imu_config_t config = 
     {
         .rate = control->rate,

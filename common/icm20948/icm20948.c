@@ -152,7 +152,9 @@ static status_e _get_sample(icm20948_data_t *data, bool *sample_ready)
 		inv_compute_scalar_part(long_quat, (long *) &data->quat);
 		data->has_quat = true;
 	}
-		
+
+	*sample_ready = data_left_in_fifo != 0;
+
     return STATUS_OK;
 }
 

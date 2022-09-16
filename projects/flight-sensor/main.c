@@ -19,9 +19,6 @@
 #include "twi.h"
 
 
-APP_TIMER_DEF(m_imu_stop_timer_id);
-
-
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
 
 
@@ -63,23 +60,10 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             break;
-        case BLE_HELPER_EVENT_DISCONNECTED:
-        {
-            // event_t event = {.event = EVENT_DISCONNECTED};
-            // state_machine_add_event(&event);
-            break;
-        }
         default:
             break;
     }
 }
-
-static void _imu_stop_timeout_handler(void * p_context)
-{
-    // event_t event = {.event = EVENT_STOP_SAMPLING};
-    // state_machine_add_event(&event);
-}
-
 
 static void initialize(void)
 {
@@ -101,12 +85,6 @@ static void initialize(void)
 
     err_code = bsp_btn_ble_init(NULL, &startup_event);
     APP_ERROR_CHECK(err_code);
-
-    // Timers
-    err_code = app_timer_create(&m_imu_stop_timer_id,
-                                APP_TIMER_MODE_SINGLE_SHOT,
-                                _imu_stop_timeout_handler);
-    APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for application main entry.
@@ -117,12 +95,12 @@ int main(void)
     logger_create();
     initialize();
     APP_SCHED_INIT(4, MAX_APP_SCHEDULER_QUEUE_SIZE);
-    ble_helper_create(_ble_helper_event_handler);
+    ble_helper_create();
     session_manager_create();
     twi_init();
     imu_create();
     timestamp_create();
-
+    ble_helper_register_callback(_ble_helper_event_handler);
     LOG_INFO("Flight Sensor Started.");
 
     ble_helper_advertising_start(false);

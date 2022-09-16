@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include "state_machine.h"
 #include "app_timer.h"
+#include "session_manager.h"
+#include "sample_store.h"
 
 
 typedef enum
@@ -29,11 +31,12 @@ typedef enum
 typedef struct
 {
     state_machine_t sm;
-    uint8_t rate;
-    uint8_t destination;
+    imu_sample_rate_e rate;
+    session_destination_e destination;
     uint8_t flags;
     uint32_t session_time;
     app_timer_id_t timer;
+    sample_store_t sample_store;
 } session_manager_control_t;
 
 extern const state_t *session_initial_state;

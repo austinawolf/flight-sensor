@@ -35,6 +35,8 @@
 #include "logger.h"
 
 
+#define MAX_EVENT_HANDLERS      (4u)
+
 #define DEVICE_NAME                         "Flight Sensor"                         /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                   "Austin Wolf"                           /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                    300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
@@ -73,7 +75,8 @@ BLE_ADVERTISING_DEF(m_advertising);                                 /**< Adverti
 
 static uint16_t m_conn_handle         = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
 
-static ble_helper_event_handler_t _event_handler = NULL;
+static uint8_t _event_handler_count = 0u;
+static ble_helper_event_handler_t _event_handlers[MAX_EVENT_HANDLERS] = {0};
 
 static ble_uuid_t m_adv_uuids[] =                                   /**< Universally unique service identifiers. */
 {
@@ -87,9 +90,9 @@ static ble_uuid_t m_adv_uuids[] =                                   /**< Univers
  */
 static void _on_event(ble_helper_event_e event)
 {
-    if (_event_handler != NULL)
+    for (uint8_t i = 0; i < _event_handler_count; i++)
     {
-        _event_handler(event);
+        _event_handlers[i](event);
     }
 }
 
@@ -402,6 +405,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                           *((uint8_t *)&p_ble_evt->evt.gap_evt.params.auth_status.kdist_own),
                           *((uint8_t *)&p_ble_evt->evt.gap_evt.params.auth_status.kdist_peer));
             break;
+        case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+            _on_event(BLE_HELPER_EVENT_NOTIF_TX_COMPLETE);
+            break;
 
         default:
             // No implementation needed.
@@ -503,7 +509,7 @@ static void advertising_init(void)
  * 
  * @return status_e 
  */
-status_e ble_helper_create(ble_helper_event_handler_t event_handler)
+status_e ble_helper_create(void)
 {
     // Initialize.
     ble_stack_init();
@@ -513,10 +519,20 @@ status_e ble_helper_create(ble_helper_event_handler_t event_handler)
     advertising_init();
     conn_params_init();
     peer_manager_init();
-
-    _event_handler = event_handler;
-
+ 
     return STATUS_OK;
+}
+
+status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler)
+{
+    if (_event_handler_count >= MAX_EVENT_HANDLERS)
+    {
+        return STATUS_ERROR_BUFFER_FULL;
+    }
+
+    _event_handlers[_event_handler_count++] = event_handler;
+
+    return STATUS_ERROR;
 }
 
 void ble_helper_advertising_start(bool erase_bonds)
