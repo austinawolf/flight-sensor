@@ -6,6 +6,7 @@
 #include "command_handler.h"
 #include "logger.h"
 #include "state_machine.h"
+#include "session_manager.h"
 
 /**
  * @brief 

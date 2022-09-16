@@ -23,7 +23,7 @@ static const transition_t *_get_transition(state_machine_t *state_machine, uint3
     while (true)
     {
         const transition_t *transition = &state_machine->current->transitions[i];
-        if (event == NULL_TRANSITION)
+        if (transition->event == NULL_TRANSITION)
         {
             return NULL;
         }
@@ -49,6 +49,7 @@ status_e state_machine_on_event(state_machine_t *state_machine, event_t event)
 
     if (transition->next == state_machine->current)
     {
+        state_machine->previous = state_machine->current;
         if (state_machine->current->on_reentry != NULL)
         {
             state_machine->current->on_reentry(state_machine->context);
@@ -72,7 +73,7 @@ status_e state_machine_on_event(state_machine_t *state_machine, event_t event)
 
     if (state_machine->callback)
     {
-        state_machine->callback(state_machine->current, state_machine->previous);
+        state_machine->callback(state_machine->current, state_machine->previous, transition);
     }
 
     return STATUS_OK;

@@ -27,4 +27,6 @@ status_e session_manager_stop_playback(void);
 
 status_e session_manager_calibrate(void);
 
+status_e session_manager_on_calibration_done(bool success);
+
 #endif

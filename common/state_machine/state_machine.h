@@ -18,13 +18,14 @@ typedef uint32_t event_t;
 
 typedef struct state_s state_t;
 
-typedef void (*transition_callback_t)(const state_t *new_state, const state_t *previous_state);
-
 typedef struct
 {
+    const char *name;
     event_t event;
     const state_t *next;
 } transition_t;
+
+typedef void (*transition_callback_t)(const state_t *new_state, const state_t *previous_state, const transition_t *transition);
 
 typedef struct
 {

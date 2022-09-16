@@ -11,6 +11,8 @@
 #include "app_scheduler.h"
 
 
+APP_TIMER_DEF(m_timeout_event_timer);
+
 static session_manager_control_t _control = 
 {
     .sm = {0},
@@ -18,11 +20,12 @@ static session_manager_control_t _control =
     .destination = 0,
     .flags = 0,
     .session_time = 0,
+    .timer = m_timeout_event_timer,
 };
 
-static void _transition_callback(const state_t *new_state, const state_t *previous_state)
+static void _transition_callback(const state_t *new_state, const state_t *previous_state, const transition_t *transition)
 {
-    LOG_INFO("Session State Update: %s -> %s", previous_state->name, new_state->name);
+    LOG_INFO("Session State Update: %s -> %s via %s", previous_state->name, new_state->name, transition->name);
 }
 
 static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
@@ -72,9 +75,15 @@ static void _process_event(void * p_event_data, uint16_t event_size)
     state_machine_on_event(&_control.sm, event);
 }
 
-static void _on_event(uint32_t event)
+static void _on_event(session_event_e event)
 {
-    app_sched_event_put(&event, 4, _process_event);
+    uint32_t event_value = event;
+    app_sched_event_put(&event_value, 4, _process_event);
+}
+
+static void _timer_timeout_handler(void * p_context)
+{
+    _on_event(SESSION_EVENT_TIMEOUT);
 }
 
 status_e session_manager_create(void)
@@ -83,6 +92,14 @@ status_e session_manager_create(void)
     if (status != STATUS_OK)
     {
         return status;
+    }
+
+    uint32_t err_code = app_timer_create(&m_timeout_event_timer,
+                                        APP_TIMER_MODE_SINGLE_SHOT,
+                                        _timer_timeout_handler);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR;
     }
 
     imu_register_callback(_imu_sample_callback);
@@ -128,5 +145,19 @@ status_e session_manager_stop_playback(void)
 status_e session_manager_calibrate(void)
 {
     _on_event(SESSION_EVENT_CALIBRATE);
+    return STATUS_OK;
+}
+
+status_e session_manager_on_calibration_done(bool success)
+{
+    if (success)
+    {
+        _on_event(SESSION_EVENT_SUCCESS);
+    }
+    else
+    {
+        _on_event(SESSION_EVENT_ERROR);
+    }
+
     return STATUS_OK;
 }

@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "state_machine.h"
+#include "app_timer.h"
+
 
 typedef enum
 {
@@ -21,6 +23,7 @@ typedef enum
     SESSION_EVENT_DISCONNECTED,
     SESSION_EVENT_CALIBRATE,
     SESSION_EVENT_SUCCESS,
+    SESSION_EVENT_ERROR,
 } session_event_e;
 
 typedef struct
@@ -30,6 +33,7 @@ typedef struct
     uint8_t destination;
     uint8_t flags;
     uint32_t session_time;
+    app_timer_id_t timer;
 } session_manager_control_t;
 
 extern const state_t *session_initial_state;
