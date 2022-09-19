@@ -96,7 +96,10 @@ status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
     _control.callback = NULL;
     _control.is_busy = true;
     uint32_t err_code = nrf_drv_qspi_read(data, len, address);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR;
+    }
 
     return STATUS_OK;
 }
@@ -113,8 +116,11 @@ status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len, flash_
     _control.context = context;
 
     uint32_t err_code = nrf_drv_qspi_write(data, len, address);
-    APP_ERROR_CHECK(err_code);
-    
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR;
+    }    
+
     return STATUS_OK;
 }
 
@@ -146,7 +152,10 @@ status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_
     _control.context = context;
 
     uint32_t err_code = nrf_drv_qspi_erase(erase_len, address);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR;
+    }
 
     return STATUS_OK;
 }

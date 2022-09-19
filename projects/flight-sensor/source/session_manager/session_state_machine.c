@@ -26,12 +26,12 @@ static void _sampling_on_entry(void *context)
 
     if ((control->destination == SESSION_DESTINATION_MEMORY) || (control->destination == SESSION_DESTINATION_BOTH))
     {
-        status_e status = sample_store_reset(&control->sample_store);
-        if (status != STATUS_OK)
-        {
-            LOG_ERROR("sample_store_reset failed, err: %d", status);
-            return;
-        }
+        // status_e status = sample_store_reset(&control->sample_store);
+        // if (status != STATUS_OK)
+        // {
+        //     LOG_ERROR("sample_store_reset failed, err: %d",)
+        //     return status;
+        // }
     }
 
     imu_config_t config = 

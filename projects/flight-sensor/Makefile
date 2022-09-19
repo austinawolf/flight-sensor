@@ -27,7 +27,7 @@ SRC_FILES += \
   $(COMMON_ROOT)/queue/queue.c \
   $(COMMON_ROOT)/twi/twi.c \
   $(COMMON_ROOT)/state_machine/state_machine.c \
-  $(COMMON_ROOT)/sample_store/sample_store.c \
+  $(COMMON_ROOT)/session_store/session_store.c \
   $(COMMON_ROOT)/flash/flash.c \
   $(EXTERNAL_ROOT)/icm20948/common/inv_mems_drv_hook.c \
   $(EXTERNAL_ROOT)/icm20948/dmp3/inv_mems_interface_mapping.c \
@@ -184,7 +184,7 @@ INC_FOLDERS += \
   $(COMMON_ROOT)/twi \
   $(COMMON_ROOT)/state_machine \
   $(COMMON_ROOT)/flash \
-  $(COMMON_ROOT)/sample_store \
+  $(COMMON_ROOT)/session_store \
   $(EXTERNAL_ROOT)/icm20948/ \
   $(EXTERNAL_ROOT)/icm20948/common \
   $(EXTERNAL_ROOT)/icm20948/dmp3 \

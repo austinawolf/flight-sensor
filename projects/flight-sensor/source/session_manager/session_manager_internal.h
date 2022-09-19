@@ -12,7 +12,7 @@
 #include "state_machine.h"
 #include "app_timer.h"
 #include "session_manager.h"
-#include "sample_store.h"
+#include "session_store.h"
 
 
 typedef enum
@@ -36,7 +36,6 @@ typedef struct
     uint8_t flags;
     uint32_t session_time;
     app_timer_id_t timer;
-    sample_store_t sample_store;
 } session_manager_control_t;
 
 extern const state_t *session_initial_state;

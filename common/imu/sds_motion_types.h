@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include "sdk_common.h"
-#include "sds_motion_types.h"
+
 
 /**
     * @brief Used in the motion structure to indicate which data is valid
