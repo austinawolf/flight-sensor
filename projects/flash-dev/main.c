@@ -37,7 +37,10 @@ int main(void)
 
     }
 
-    for (int i = 0; i < SAMPLES_TO_WRITE; i++)
+    uint32_t write_count = 0;
+    uint32_t read_count = 0;
+
+    while (true)
     {
         imu_sample_t sample = 
         {
@@ -49,39 +52,59 @@ int main(void)
         };
 
         status_e status = session_store_append(&sample);
-        ASSERT_STATUS(status);
+        if (status == STATUS_ERROR_FLASH_FULL)
+        {
+            break;
+        }
+        else if (status != STATUS_OK)
+        {
+            APP_ERROR_CHECK(-1);
+        }
+
+        write_count++;
 
         LOG_FLUSH();
-
         nrf_delay_ms(5);
     }
+    
+    LOG_INFO("Write Count: %d", write_count);
+
+    while(session_store_is_busy()) {}
 
     status = session_store_close();
     ASSERT_STATUS(status);
 
-    while(session_store_is_busy())
-    {
-        ;
-    }
+    while(session_store_is_busy()) {}
 
-    for (int i = 0; i < SAMPLES_TO_READ; i++)
+    while (true)
     {
         imu_sample_t sample = {0};
 
-        status_e status = session_store_read(i, &sample);
-        ASSERT_STATUS(status);
+        status_e status = session_store_read(read_count, &sample);
+        if (status == STATUS_ERROR_INVALID_PARAM)
+        {
+            break;
+        }
+        else if (status != STATUS_OK)
+        {
+            APP_ERROR_CHECK(-1);
+        }
 
         if (sample.timestamp != 0xAAAAAAAA)
         {
             ASSERT_STATUS(-1);
         }
+
+        read_count++;
     }
+
+    LOG_INFO("Read Count: %d", read_count);
 
     while (true)
     {
         LOG_INFO("DONE");
         LOG_FLUSH();
-        nrf_delay_ms(5000);
+        nrf_delay_ms(2000);
     }
 }
 

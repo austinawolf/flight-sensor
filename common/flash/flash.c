@@ -16,6 +16,9 @@
 #define QSPI_STD_CMD_RST    0x99
 
 
+/**
+ * Definition of fields in flash control block
+ */
 typedef struct 
 {
     volatile bool is_busy;
@@ -24,10 +27,12 @@ typedef struct
     void *context;
 } flash_control_t;
 
-
+// Flas control block, initialized on #flash_create
 static flash_control_t _control = {0};
 
-
+/**
+ * Event handler for events from nordic QSPI driver
+ */
 static void qspi_handler(nrf_drv_qspi_evt_t event, void * p_context)
 {
     (void) event;
@@ -45,7 +50,10 @@ static void qspi_handler(nrf_drv_qspi_evt_t event, void * p_context)
     }
 }
 
-static void configure_memory()
+/**
+ * Setup memory on init
+ */
+static status_e configure_memory()
 {
     uint8_t temporary = 0x40;
     uint32_t err_code;
@@ -61,18 +69,29 @@ static void configure_memory()
 
     // Send reset enable
     err_code = nrf_drv_qspi_cinstr_xfer(&cinstr_cfg, NULL, NULL);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR_INTERNAL;
+    }
 
     // Send reset command
     cinstr_cfg.opcode = QSPI_STD_CMD_RST;
     err_code = nrf_drv_qspi_cinstr_xfer(&cinstr_cfg, NULL, NULL);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR_INTERNAL;
+    }
 
     // Switch to qspi mode
     cinstr_cfg.opcode = QSPI_STD_CMD_WRSR;
     cinstr_cfg.length = NRF_QSPI_CINSTR_LEN_2B;
     err_code = nrf_drv_qspi_cinstr_xfer(&cinstr_cfg, &temporary, NULL);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR_INTERNAL;
+    }
+    
+    return STATUS_OK;
 }
 
 /**
@@ -83,13 +102,18 @@ status_e flash_create(void)
     nrf_drv_qspi_config_t config = NRF_DRV_QSPI_DEFAULT_CONFIG;
 
     uint32_t err_code = nrf_drv_qspi_init(&config, qspi_handler, NULL);
-    APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS)
+    {
+        return STATUS_ERROR_INTERNAL;
+    }
 
-    configure_memory();
+    status_e status = configure_memory();
+    if (status != STATUS_OK)
+    {
+        return status;
+    }
 
     _control.is_busy = false;
-
-    //nrf_drv_qspi_uninit();
 
     return STATUS_OK;
 }
@@ -99,8 +123,6 @@ status_e flash_create(void)
  */
 status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
 {
-    LOG_DEBUG("Flash read: address=%d, data=%p, len=%d", address, data, len);
-
     if (_control.is_busy)
     {
         return STATUS_ERROR_INVALID_STATE;
@@ -112,7 +134,7 @@ status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
     uint32_t err_code = nrf_drv_qspi_read(data, len, address);
     if (err_code != NRF_SUCCESS)
     {
-        return STATUS_ERROR;
+        return STATUS_ERROR_INTERNAL;
     }
 
     return STATUS_OK;
@@ -136,7 +158,7 @@ status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len)
     uint32_t err_code = nrf_drv_qspi_write(data, len, address);
     if (err_code != NRF_SUCCESS)
     {
-        return STATUS_ERROR;
+        return STATUS_ERROR_INTERNAL;
     }    
 
     return STATUS_OK;
@@ -151,7 +173,7 @@ status_e flash_erase(uint32_t address, flash_erase_e type)
 
     if (_control.is_busy)
     {
-        return STATUS_ERROR;
+        return STATUS_ERROR_INVALID_STATE;
     }
 
     nrf_qspi_erase_len_t erase_len = 0u;
@@ -174,7 +196,7 @@ status_e flash_erase(uint32_t address, flash_erase_e type)
     uint32_t err_code = nrf_drv_qspi_erase(erase_len, address);
     if (err_code != NRF_SUCCESS)
     {
-        return STATUS_ERROR;
+        return STATUS_ERROR_INTERNAL;
     }
 
     return STATUS_OK;

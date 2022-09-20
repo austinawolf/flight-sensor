@@ -1,7 +1,7 @@
 /**
- * @file    sample_store.h
+ * @file    session_store.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Double buffered data store of sample data saved in flash
  */
 
 #ifndef SAMPLE_STORE_H_
