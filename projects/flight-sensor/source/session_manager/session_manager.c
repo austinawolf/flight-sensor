@@ -28,6 +28,18 @@ static void _transition_callback(const state_t *new_state, const state_t *previo
     LOG_INFO("Session State Update: %s -> %s via %s", previous_state->name, new_state->name, transition->name);
 }
 
+static void _process_event(void * p_event_data, uint16_t event_size)
+{
+    uint32_t event = *((uint32_t*) p_event_data);
+
+    state_machine_on_event(&_control.sm, event);
+}
+
+static void _on_event(session_event_e event)
+{
+    uint32_t event_value = event;
+    app_sched_event_put(&event_value, 4, _process_event);
+}
 
 static void _on_new_sample(imu_sample_t *sample)
 {
@@ -42,11 +54,16 @@ static void _on_new_sample(imu_sample_t *sample)
 
     if ((_control.destination == SESSION_DESTINATION_MEMORY) || (_control.destination == SESSION_DESTINATION_BOTH))
     {
-        // status_e status = sample_store_append(&_control.sample_store, sample, sizeof(imu_sample_t));
-        // if (status != STATUS_OK)
-        // {
-        //     LOG_ERROR("sample_store_append failed, err: %d", status);
-        // }
+        status_e status = session_store_append(sample);
+        if (status == STATUS_ERROR_FLASH_FULL)
+        {
+            LOG_INFO("Flash full");
+            _on_event(SESSION_EVENT_FLASH_FULL);
+        }
+        else if (status != STATUS_OK)
+        {
+            LOG_ERROR("session_store_append failed, err: %d", status);
+        }
     }
 }
 static volatile uint8_t _samples_ready = 0u;
@@ -84,19 +101,6 @@ static void _imu_sample_callback(void)
     }
 }
 
-static void _process_event(void * p_event_data, uint16_t event_size)
-{
-    uint32_t event = *((uint32_t*) p_event_data);
-
-    state_machine_on_event(&_control.sm, event);
-}
-
-static void _on_event(session_event_e event)
-{
-    uint32_t event_value = event;
-    app_sched_event_put(&event_value, 4, _process_event);
-}
-
 static void _timer_timeout_handler(void * p_context)
 {
     _on_event(SESSION_EVENT_TIMEOUT);
@@ -114,16 +118,22 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
     {
         status_e status = STATUS_OK;
 
-        // status = sample_store_read(NULL, 0, &sample, sizeof(imu_sample_t), 1);
-        // if (status != STATUS_OK)
-        // {
-        //     LOG_ERROR("sample_store_read failed, err: %d", status);
-        //     return;
-        // }
+        status = session_store_read(_control.playback_index, &sample);
+        if (status == STATUS_ERROR_INVALID_PARAM)
+        {
+            _on_event(SESSION_EVENT_PLAYBACK_DONE);
+            return;
+        }
+        else if (status != STATUS_OK)
+        {
+            LOG_ERROR("session_store_read failed, err: %d", status);
+            return;
+        }
 
         status = ble_helper_sample_send(&sample);
         if (status == STATUS_ERROR_BUFFER_FULL)
         {
+            LOG_INFO("Buffer full: %d", _control.playback_index);
             buffer_full = true;
         }
         else if(status != STATUS_OK)
@@ -131,9 +141,12 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
             LOG_ERROR("ble_helper_sample_send failed: %d", status);
             return;
         }
-        break;
+        else
+        {
+            _control.playback_index++;
+        }
     }
-    while (buffer_full);
+    while (!buffer_full);
 }
 
 static void _ble_helper_event_handler(ble_helper_event_e event)
@@ -150,7 +163,7 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
         }
         case BLE_HELPER_EVENT_NOTIF_TX_COMPLETE:
         {
-            if (false)  // is playback state
+            if (_control.is_playback)
             {
                 app_sched_event_put(NULL, 0, _transfer_samples_from_memory);
             }
@@ -175,13 +188,6 @@ status_e session_manager_create(void)
     {
         return STATUS_ERROR;
     }
-
-    // status = sample_store_create(&_control.sample_store);
-    // if (status != STATUS_OK)
-    // {
-    //     LOG_ERROR("sample_store_create failed, err: %d", status);
-    //     return status;
-    // }
 
     imu_register_callback(_imu_sample_callback);
     ble_helper_register_callback(_ble_helper_event_handler);

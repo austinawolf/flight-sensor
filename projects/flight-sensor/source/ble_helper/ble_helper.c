@@ -40,13 +40,13 @@
 #define DEVICE_NAME                         "Flight Sensor"                         /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                   "Austin Wolf"                           /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                    300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
-#define APP_ADV_DURATION                    18000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define APP_ADV_DURATION                    60000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
 #define APP_BLE_CONN_CFG_TAG                1                                       /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_OBSERVER_PRIO               3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
 #define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Minimum acceptable connection interval (0.4 seconds). */
-#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(50, UNIT_1_25_MS)        /**< Maximum acceptable connection interval (0.65 second). */
+#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Maximum acceptable connection interval (0.65 second). */
 #define SLAVE_LATENCY                       0                                       /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS(4000, UNIT_10_MS)         /**< Connection supervisory timeout (4 seconds). */
 
@@ -406,9 +406,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                           *((uint8_t *)&p_ble_evt->evt.gap_evt.params.auth_status.kdist_peer));
             break;
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+        {
             _on_event(BLE_HELPER_EVENT_NOTIF_TX_COMPLETE);
             break;
-
+        }
         default:
             // No implementation needed.
             break;

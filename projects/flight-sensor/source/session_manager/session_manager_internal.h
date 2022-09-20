@@ -26,6 +26,8 @@ typedef enum
     SESSION_EVENT_CALIBRATE,
     SESSION_EVENT_SUCCESS,
     SESSION_EVENT_ERROR,
+    SESSION_EVENT_PLAYBACK_DONE,
+    SESSION_EVENT_FLASH_FULL,
 } session_event_e;
 
 typedef struct
@@ -36,6 +38,8 @@ typedef struct
     uint8_t flags;
     uint32_t session_time;
     app_timer_id_t timer;
+    uint32_t playback_index;
+    bool is_playback;
 } session_manager_control_t;
 
 extern const state_t *session_initial_state;

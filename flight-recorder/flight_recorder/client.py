@@ -32,11 +32,13 @@ class Client:
         self._service = None
         self._command_characteristic = None
         self._data_characteristic = None
+        self._data = []
 
     def _on_data_recieved(self, characteristic, event_args):
         try:
             data = Data.from_bytes(event_args.value)
             logger.info(data)
+            self._data.append(data)
         except Exception as e:
             logger.error("Failed to decode data, stream: [{}]".format(binascii.hexlify(event_args.value)))
             logger.exception(e)

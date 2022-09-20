@@ -26,19 +26,13 @@ static void _sampling_on_entry(void *context)
 
     if ((control->destination == SESSION_DESTINATION_MEMORY) || (control->destination == SESSION_DESTINATION_BOTH))
     {
-        // status_e status = sample_store_reset(&control->sample_store);
-        // if (status != STATUS_OK)
-        // {
-        //     LOG_ERROR("sample_store_reset failed, err: %d",)
-        //     return status;
-        // }
+        status_e status = session_store_open();
+        if (status != STATUS_OK)
+        {
+            LOG_ERROR("session_store_open failed, err: %d", status)
+            return;
+        }
     }
-
-    imu_config_t config = 
-    {
-        .rate = control->rate,
-        .flags = control->flags,
-    };
 
     if (control->session_time)
     {
@@ -49,12 +43,28 @@ static void _sampling_on_entry(void *context)
         }
     }
 
+    imu_config_t config = 
+    {
+        .rate = control->rate,
+        .flags = control->flags,
+    };
+
     imu_start(&config);
 }
 
 static void _sampling_on_exit(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
+
+    if ((control->destination == SESSION_DESTINATION_MEMORY) || (control->destination == SESSION_DESTINATION_BOTH))
+    {
+        status_e status = session_store_close();
+        if (status != STATUS_OK)
+        {
+            LOG_ERROR("session_store_close failed, err: %d", status)
+            return;
+        }
+    }
 
     imu_stop();
 
@@ -67,12 +77,17 @@ static void _sampling_on_exit(void *context)
 
 static void _playback_on_entry(void *context)
 {
-
+    session_manager_control_t *control = (session_manager_control_t*) context;
+    
+    control->playback_index = 0u;
+    control->is_playback = true;
 }
 
 static void _playback_on_exit(void *context)
 {
+    session_manager_control_t *control = (session_manager_control_t*) context;
     
+    control->is_playback = false;
 }
 
 static void _calibrate_on_entry(void *context)
@@ -111,6 +126,7 @@ static const state_t _sampling =
     {
         {.event = SESSION_EVENT_STOP_SAMPLING,  .next = &_idle,     .name="Stop"},
         {.event = SESSION_EVENT_TIMEOUT,        .next = &_idle,     .name="Timeout"},
+        {.event = SESSION_EVENT_FLASH_FULL,     .next = &_idle,  .name="Flash Full"},
         {.event = NULL_TRANSITION}
     }
 };
@@ -124,6 +140,7 @@ static const state_t _playback =
     .transitions = (transition_t[])
     {
         {.event = SESSION_EVENT_STOP_PLAYBACK, .next = &_idle,      .name="Stop"},
+        {.event = SESSION_EVENT_PLAYBACK_DONE, .next = &_idle,      .name="Done"},
         {.event = NULL_TRANSITION}
     }
 };

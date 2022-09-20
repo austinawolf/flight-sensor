@@ -78,6 +78,7 @@ struct ble_imu_s
     ble_gatts_char_handles_t     data_handles;                                          /**< Handles related to the Body Sensor Location characteristic. */
     uint16_t                     conn_handle;                                          /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
     uint8_t                      uuid_type;
+    uint16_t                     packet_index;
 };
 
 

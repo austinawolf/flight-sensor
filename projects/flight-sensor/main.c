@@ -17,6 +17,8 @@
 #include "command_handler.h"
 #include "app_scheduler.h"
 #include "twi.h"
+#include "session_store.h"
+#include "flash.h"
 
 
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
@@ -100,6 +102,8 @@ int main(void)
     twi_init();
     imu_create();
     timestamp_create();
+    flash_create();
+    session_store_create();
     ble_helper_register_callback(_ble_helper_event_handler);
     LOG_INFO("Flight Sensor Started.");
 

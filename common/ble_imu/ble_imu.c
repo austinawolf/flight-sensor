@@ -172,6 +172,7 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
     p_imu->evt_handler                 = p_imu_init->evt_handler;
     p_imu->conn_handle                 = BLE_CONN_HANDLE_INVALID;
     p_imu->uuid_type                   = BLE_UUID_TYPE_VENDOR_BEGIN;
+    p_imu->packet_index                = 0;
 
     // Add a custom base UUID.
     ble_uuid128_t base_uuid = {BLE_UUID_COMMAND_CHAR_BASE};
@@ -235,14 +236,12 @@ uint32_t ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
  * @param sample 
  * @param data 
  */
-static void _encode_sample(const imu_sample_t *sample, ble_imu_data_t *data)
+static void _encode_sample(const imu_sample_t *sample, ble_imu_data_t *data, uint16_t packet_index)
 {
-    static uint16_t sample_index = 0u;
-
     data->field.preamble = IMU_DATA_PREAMBLE;
     data->field.timestamp = sample->timestamp;
     data->field.flags = sample->flags;
-    data->field.index = sample_index++;
+    data->field.index = packet_index;
 
     memcpy(&data->field.accel, &sample->accel, sizeof(sample->accel));
     memcpy(&data->field.gyro, &sample->gyro, sizeof(sample->gyro));
@@ -263,7 +262,7 @@ status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
         return STATUS_ERROR_INVALID_STATE;
     }
 
-    _encode_sample(sample, &buffer);
+    _encode_sample(sample, &buffer, p_imu->packet_index);
     
     ble_gatts_hvx_params_t hvx_params = {
         .handle = p_imu->data_handles.value_handle,
@@ -276,16 +275,18 @@ status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
     err_code = sd_ble_gatts_hvx(p_imu->conn_handle, &hvx_params);
     if ((err_code == NRF_SUCCESS) && (hvx_len != len))
     {
-        err_code = STATUS_ERROR_DATA_SIZE;
+        return STATUS_ERROR_DATA_SIZE;
     }
     else if (err_code == NRF_ERROR_RESOURCES)
     {
-        err_code = STATUS_ERROR_BUFFER_FULL;
+        return STATUS_ERROR_BUFFER_FULL;
     }
     else if (err_code != NRF_SUCCESS)
     {
-        return STATUS_ERROR;
+        return STATUS_ERROR_INTERNAL;
     }
+
+    p_imu->packet_index++;
 
     return STATUS_OK;
 }

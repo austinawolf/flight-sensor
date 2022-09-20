@@ -166,7 +166,6 @@ static void _flash_event_handler(flash_event_e event, void *context)
     switch (event)
     {
         case FLASH_EVENT_WRITE_DONE:
-            LOG_INFO("Write complete");
             _control.write_in_progress = false;
             if (!_control.is_open)
             {
@@ -179,7 +178,6 @@ static void _flash_event_handler(flash_event_e event, void *context)
             }
             break;
         case FLASH_EVENT_ERASE_DONE:
-            LOG_INFO("Erase complete");
             _control.erase_in_progress = false;
             break;
         case FLASH_EVENT_READ_DONE:
@@ -197,7 +195,7 @@ status_e session_store_create(void)
     flash_register_event_handler(_flash_event_handler, NULL);
 
     _control.start = 10;
-    _control.len = 50;
+    _control.len = 30;
 
     return STATUS_OK;
 }
@@ -250,6 +248,8 @@ status_e session_store_close(void)
         return status;
     }
 
+    LOG_INFO("Stored %d samples", _control.sector_index * SAMPLES_PER_SECTOR + buffer->header.count);
+    
     _control.is_open = false;
 
     return STATUS_OK;
