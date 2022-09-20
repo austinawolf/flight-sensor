@@ -13,7 +13,10 @@
 
 typedef enum
 {
-    FLASH_EVENT_DONE,
+    FLASH_EVENT_WRITE_DONE,
+    FLASH_EVENT_READ_DONE,
+    FLASH_EVENT_ERASE_DONE,
+    FLASH_EVENT_MAX_VALUE,
 } flash_event_e;
 
 
@@ -58,7 +61,7 @@ status_e flash_read(uint32_t address, uint8_t *data, uint32_t len);
  *
  * @return  Status_OK on success
  */
-status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len, flash_event_callback_t callback, void *context);
+status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len);
 
 /**
  * Erase section of flash memory
@@ -67,7 +70,7 @@ status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len, flash_
  *
  * @return  Status_OK on success
  */
-status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_t callback, void *context);
+status_e flash_erase(uint32_t address, flash_erase_e type);
 
 /**
  * @brief 
@@ -76,5 +79,11 @@ status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_
  * @return status_e 
  */
 status_e flash_is_busy(bool *is_busy);
+
+/**
+ * @brief 
+ * 
+ */
+status_e flash_register_event_handler(flash_event_callback_t callback, void *context);
 
 #endif

@@ -14,7 +14,7 @@ SRC_FILES += \
   $(PROJ_DIR)/main.c \
   $(COMMON_ROOT)/flash/flash.c \
   $(COMMON_ROOT)/logger/logger.c \
-  $(COMMON_ROOT)/sample_store/sample_store.c \
+  $(COMMON_ROOT)/session_store/session_store.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(SDK_ROOT)/components/libraries/atomic/nrf_atomic.c \
   $(SDK_ROOT)/components/libraries/balloc/nrf_balloc.c \
@@ -53,7 +53,8 @@ INC_FOLDERS += \
   $(COMMON_ROOT) \
   $(COMMON_ROOT)/flash \
   $(COMMON_ROOT)/logger \
-  $(COMMON_ROOT)/sample_store \
+  $(COMMON_ROOT)/session_store \
+  $(COMMON_ROOT)/imu \
   $(SDK_ROOT)/components \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
@@ -88,8 +89,8 @@ OPT = -Og -g3
 
 # C flags common to all targets
 CFLAGS += $(OPT)
-#CFLAGS += -DBOARD_PCA10056
-CFLAGS += -DBOARD_PCA_X01
+CFLAGS += -DBOARD_PCA10056
+#CFLAGS += -DBOARD_PCA_X01
 CFLAGS += -DBSP_DEFINES_ONLY
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET
 CFLAGS += -DFLOAT_ABI_HARD

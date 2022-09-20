@@ -25,7 +25,14 @@ status_e session_store_create(void);
  * 
  * @return status_e 
  */
-status_e session_store_clear(void);
+status_e session_store_open(void);
+
+/**
+ * @brief 
+ * 
+ * @return status_e 
+ */
+status_e session_store_close(void);
 
 /**
  * @brief 
@@ -40,5 +47,13 @@ status_e session_store_append(const imu_sample_t *data);
  * @return status_e 
  */
 status_e session_store_read(uint32_t index, imu_sample_t *data);
+
+/**
+ * @brief 
+ * 
+ * @return true 
+ * @return false 
+ */
+bool session_store_is_busy(void);
 
 #endif

@@ -6,32 +6,13 @@
 #include "logger.h"
 #include "status.h"
 #include "flash.h"
-#include "sample_store.h"
+#include "session_store.h"
 #include "sdk_config.h"
 #include "nrf_delay.h"
 
+#define SAMPLES_TO_WRITE    (1000)
+#define SAMPLES_TO_READ     (1000)
 
-/**
- * @brief 
- * 
- */
-typedef struct
-{
-    uint32_t timestamp;
-    int16_t accel[3];
-    int16_t gyro[3];
-    uint16_t compass[3];
-    int32_t quat[4];
-} imu_sample_t;
-
-
-
-static sample_store_t store = 
-{
-    .start = 0u,
-    .len = ONE_MB,
-    .sample_size = sizeof(imu_sample_t),
-};
 
 int main(void)
 {
@@ -45,13 +26,18 @@ int main(void)
     status = flash_create();
     ASSERT_STATUS(status);
 
-    status = sample_store_create(&store);
+    status = session_store_create();
     ASSERT_STATUS(status);
 
-    status = sample_store_reset(&store);
+    status = session_store_open();
     ASSERT_STATUS(status);
 
-    for (int i = 0; i < 210; i++)
+    while(session_store_is_busy())
+    {
+
+    }
+
+    for (int i = 0; i < SAMPLES_TO_WRITE; i++)
     {
         imu_sample_t sample = 
         {
@@ -62,42 +48,40 @@ int main(void)
             .quat = {10, 11, 12, 13},
         };
 
-        status_e status = sample_store_append(&store, &sample, sizeof(sample));
+        status_e status = session_store_append(&sample);
         ASSERT_STATUS(status);
 
-        //LOG_INFO("Sample append: %d, status: %d", i, status);
         LOG_FLUSH();
-        nrf_delay_ms(1);
+
+        nrf_delay_ms(5);
     }
 
-    for (int i = 0; i < 20; i++)
-    {
-        imu_sample_t sample = {0}; 
+    status = session_store_close();
+    ASSERT_STATUS(status);
 
-        status_e status = sample_store_read(&store, 0, &sample, sizeof(sample), 1);
+    while(session_store_is_busy())
+    {
+        ;
+    }
+
+    for (int i = 0; i < SAMPLES_TO_READ; i++)
+    {
+        imu_sample_t sample = {0};
+
+        status_e status = session_store_read(i, &sample);
         ASSERT_STATUS(status);
-        
-        bool is_busy = true;
-        while(is_busy)
-        {
-            flash_is_busy(&is_busy);
-        }
 
         if (sample.timestamp != 0xAAAAAAAA)
         {
-            LOG_ERROR("invalid timestamp: 0x%x", sample.timestamp);
-            break;
+            ASSERT_STATUS(-1);
         }
-
-        //LOG_INFO("Sample Read: 0x%x, status: %d", sample.timestamp, status);
-        LOG_FLUSH();
     }
-
-    LOG_INFO("DONE");
 
     while (true)
     {
+        LOG_INFO("DONE");
         LOG_FLUSH();
+        nrf_delay_ms(5000);
     }
 }
 

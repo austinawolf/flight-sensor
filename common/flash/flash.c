@@ -16,12 +16,10 @@
 #define QSPI_STD_CMD_RST    0x99
 
 
-static volatile bool m_finished = false;
-
-
 typedef struct 
 {
     volatile bool is_busy;
+    flash_event_e next_event;
     flash_event_callback_t callback;
     void *context;
 } flash_control_t;
@@ -34,10 +32,16 @@ static void qspi_handler(nrf_drv_qspi_evt_t event, void * p_context)
 {
     (void) event;
 
+    if (!_control.is_busy)
+    {
+        return;
+    }
+
     _control.is_busy = false;
+   
     if (_control.callback != NULL)
     {
-        _control.callback(FLASH_EVENT_DONE, p_context);
+        _control.callback(_control.next_event, _control.context);
     }
 }
 
@@ -83,6 +87,8 @@ status_e flash_create(void)
 
     configure_memory();
 
+    _control.is_busy = false;
+
     //nrf_drv_qspi_uninit();
 
     return STATUS_OK;
@@ -93,8 +99,16 @@ status_e flash_create(void)
  */
 status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
 {
-    _control.callback = NULL;
+    LOG_DEBUG("Flash read: address=%d, data=%p, len=%d", address, data, len);
+
+    if (_control.is_busy)
+    {
+        return STATUS_ERROR_INVALID_STATE;
+    }
+
+    _control.next_event = FLASH_EVENT_READ_DONE;
     _control.is_busy = true;
+
     uint32_t err_code = nrf_drv_qspi_read(data, len, address);
     if (err_code != NRF_SUCCESS)
     {
@@ -107,13 +121,17 @@ status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
 /**
  * @see flash.h
  */
-status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len, flash_event_callback_t callback, void *context)
+status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len)
 {
-    // LOG_INFO("Writing...");
+    LOG_DEBUG("Flash write: address=%d, data=%p, len=%d", address, data, len);
 
-    _control.callback = callback;
+    if (_control.is_busy)
+    {
+        return STATUS_ERROR_INVALID_STATE;
+    }
+
+    _control.next_event = FLASH_EVENT_WRITE_DONE;
     _control.is_busy = true;
-    _control.context = context;
 
     uint32_t err_code = nrf_drv_qspi_write(data, len, address);
     if (err_code != NRF_SUCCESS)
@@ -127,13 +145,16 @@ status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len, flash_
 /**
  * @see flash.h
  */
-status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_t callback, void *context)
+status_e flash_erase(uint32_t address, flash_erase_e type)
 {
-    m_finished = false;
+    LOG_DEBUG("Flash erase: address=%d, type=%d", address, type);
+
+    if (_control.is_busy)
+    {
+        return STATUS_ERROR;
+    }
+
     nrf_qspi_erase_len_t erase_len = 0u;
-
-    // LOG_INFO("Erasing...");
-
     switch (type)
     {
         case FLASH_ERASE_SECTOR:
@@ -147,9 +168,8 @@ status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_
             break;
     }
 
-    _control.callback = callback;
+    _control.next_event = FLASH_EVENT_ERASE_DONE;
     _control.is_busy = true;
-    _control.context = context;
 
     uint32_t err_code = nrf_drv_qspi_erase(erase_len, address);
     if (err_code != NRF_SUCCESS)
@@ -166,6 +186,14 @@ status_e flash_erase(uint32_t address, flash_erase_e type, flash_event_callback_
 status_e flash_is_busy(bool *is_busy)
 {
     *is_busy = _control.is_busy;
+
+    return STATUS_OK;
+}
+
+status_e flash_register_event_handler(flash_event_callback_t callback, void *context)
+{
+    _control.callback = callback;
+    _control.context = context;
 
     return STATUS_OK;
 }
