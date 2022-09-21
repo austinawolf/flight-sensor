@@ -1,10 +1,10 @@
 import struct
 
-from flight_recorder.commands import Command, CommandCodes
+from flight_recorder.packets import Command, CommandCodes
 
 
-class CalibrateCommand(Command):
-    CODE = CommandCodes.CALIBRATE
+class StopCommand(Command):
+    CODE = CommandCodes.STOP
     FORMAT = "<BB"
 
     def to_bytes(self) -> bytes:

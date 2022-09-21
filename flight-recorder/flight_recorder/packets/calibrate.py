@@ -1,10 +1,10 @@
 import struct
 
-from flight_recorder.commands import Command, CommandCodes
+from flight_recorder.packets import Command, CommandCodes
 
 
-class StartPlaybackCommand(Command):
-    CODE = CommandCodes.START_PLAYBACK
+class CalibrateCommand(Command):
+    CODE = CommandCodes.CALIBRATE
     FORMAT = "<BB"
 
     def to_bytes(self) -> bytes:

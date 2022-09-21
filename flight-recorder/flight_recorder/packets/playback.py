@@ -1,10 +1,10 @@
 import struct
 
-from flight_recorder.commands import Command, CommandCodes
+from flight_recorder.packets import Command, CommandCodes
 
 
-class StopPlaybackCommand(Command):
-    CODE = CommandCodes.STOP_PLAYBACK
+class PlaybackCommand(Command):
+    CODE = CommandCodes.PLAYBACK
     FORMAT = "<BB"
 
     def to_bytes(self) -> bytes:

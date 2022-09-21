@@ -10,20 +10,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "status.h"
-#include "command_types.h"
+#include "ble_imu_types.h"
 
-
-#define MAX_COMMAND_LENGTH (sizeof(command_t))
 
 /**
- * @brief 
- * 
- * @param command 
- * @param command_len 
- * @param response 
- * @param reponse_len 
- * @return status_e 
+ *
  */
-status_e command_handler_process(command_t *command, uint16_t command_len, response_t *response, uint16_t *response_len);
+status_e command_handler_process(command_payload_t *command, uint8_t command_len, response_payload_t *response, uint8_t *response_len);
 
 #endif

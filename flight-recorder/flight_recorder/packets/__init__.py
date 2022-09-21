@@ -8,12 +8,21 @@ logger = logging.getLogger(__name__)
 
 class CommandCodes(Enum):
     GET_STATUS = 0
-    START_SAMPLING = 1
-    STOP_SAMPLING = 2
-    START_PLAYBACK = 3
-    STOP_PLAYBACK = 4
+    STREAM = 1
+    RECORD = 2
+    PLAYBACK = 3
+    STOP = 4
     CALIBRATE = 5
     ERROR = 6
+
+
+class SessionStates(Enum):
+    IDLE = 0
+    STREAMING = 1
+    RECORDING = 2
+    PLAYBACK = 3
+    CALIBRATING = 4
+    ERROR = 5
 
 
 class Command:
@@ -26,6 +35,9 @@ class Command:
         raise NotImplementedError
 
     def _on_response(self, characteristic, event_args):
+        if event_args.value[0] != Response.PREAMBLE:
+            return
+
         logger.info("Response Received: [{}]".format(binascii.hexlify(event_args.value)))
         try:
             self._response = Response.from_bytes(event_args.value)
@@ -47,20 +59,21 @@ class Command:
 
 
 class Response:
-    FORMAT = "<BB"
+    FORMAT = "<BBB"
     PREAMBLE = 0xBB
 
     @classmethod
     def from_bytes(cls, buffer):
         args = struct.unpack(cls.FORMAT, buffer)
-        preamble, code = args
+        preamble, opcode, status = args
         if preamble != cls.PREAMBLE:
             raise Exception
-        return cls(code)
+        return cls(opcode, status)
 
-    def __init__(self, code):
-        self.code = code
+    def __init__(self, opcode, status):
+        self.opcode = opcode
+        self.status = status
 
     @property
     def is_error(self):
-        return self.code == CommandCodes.ERROR
+        return self.status != 0

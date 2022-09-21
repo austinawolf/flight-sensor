@@ -38,6 +38,7 @@ typedef struct
 struct state_s
 {
     const char * name;
+    const uint8_t id;
     void (*on_entry)(void *context);
     void (*on_exit)(void *context);
     void (*on_reentry)(void *context);

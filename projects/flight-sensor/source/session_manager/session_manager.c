@@ -21,11 +21,23 @@ static session_manager_control_t _control =
     .flags = 0,
     .session_time = 0,
     .timer = m_timeout_event_timer,
+    .stream_enabled = false,
 };
 
 static void _transition_callback(const state_t *new_state, const state_t *previous_state, const transition_t *transition)
 {
     LOG_INFO("Session State Update: %s -> %s via %s", previous_state->name, new_state->name, transition->name);
+
+    status_e status = ble_helper_send_state_update(new_state->id, previous_state->id);
+    if (status != STATUS_OK)
+    {
+        LOG_ERROR("ble_helper_send_state_update failed, err: %d", status);
+    }
+}
+
+static session_state_e _get_current_state(void)
+{
+    return (session_state_e) _control.sm.current->id;
 }
 
 static void _process_event(void * p_event_data, uint16_t event_size)
@@ -35,7 +47,7 @@ static void _process_event(void * p_event_data, uint16_t event_size)
     state_machine_on_event(&_control.sm, event);
 }
 
-static void _on_event(session_event_e event)
+static void _add_event(session_event_e event)
 {
     uint32_t event_value = event;
     app_sched_event_put(&event_value, 4, _process_event);
@@ -43,7 +55,7 @@ static void _on_event(session_event_e event)
 
 static void _on_new_sample(imu_sample_t *sample)
 {
-    if ((_control.destination == SESSION_DESTINATION_CENTAL) || (_control.destination == SESSION_DESTINATION_BOTH))
+    if (_control.stream_enabled)
     {
         status_e status = ble_helper_sample_send(sample);
         if (status != STATUS_OK)
@@ -52,13 +64,12 @@ static void _on_new_sample(imu_sample_t *sample)
         }
     }
 
-    if ((_control.destination == SESSION_DESTINATION_MEMORY) || (_control.destination == SESSION_DESTINATION_BOTH))
+    if (_get_current_state() == SESSION_STATE_RECORDING)
     {
         status_e status = session_store_append(sample);
         if (status == STATUS_ERROR_FLASH_FULL)
         {
-            LOG_INFO("Flash full");
-            _on_event(SESSION_EVENT_FLASH_FULL);
+            _add_event(SESSION_EVENT_FLASH_FULL);
         }
         else if (status != STATUS_OK)
         {
@@ -77,6 +88,7 @@ static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
     imu_sample_t sample = {0};
     do 
     {
+        // TODO: Fix sample ready logic 09/20/22
         status_e status = imu_sample_read(&sample, &sample_ready);
         _samples_ready--;
         if (status != STATUS_OK)
@@ -103,7 +115,7 @@ static void _imu_sample_callback(void)
 
 static void _timer_timeout_handler(void * p_context)
 {
-    _on_event(SESSION_EVENT_TIMEOUT);
+    _add_event(SESSION_EVENT_TIMEOUT);
 }
 
 static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_size)
@@ -121,7 +133,7 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
         status = session_store_read(_control.playback_index, &sample);
         if (status == STATUS_ERROR_INVALID_PARAM)
         {
-            _on_event(SESSION_EVENT_PLAYBACK_DONE);
+            _add_event(SESSION_EVENT_PLAYBACK_DONE);
             return;
         }
         else if (status != STATUS_OK)
@@ -133,7 +145,6 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
         status = ble_helper_sample_send(&sample);
         if (status == STATUS_ERROR_BUFFER_FULL)
         {
-            LOG_INFO("Buffer full: %d", _control.playback_index);
             buffer_full = true;
         }
         else if(status != STATUS_OK)
@@ -155,24 +166,30 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
     {
         case BLE_HELPER_EVENT_DISCONNECTED:
         {
-            if (_control.destination == SESSION_DESTINATION_CENTAL)
-            {
-                _on_event(SESSION_EVENT_STOP_SAMPLING);
-            }
+            _add_event(SESSION_EVENT_DISCONNECTED);
             break;
         }
         case BLE_HELPER_EVENT_NOTIF_TX_COMPLETE:
         {
-            if (_control.is_playback)
+            if (_get_current_state() == SESSION_STATE_PLAYBACK)
             {
                 app_sched_event_put(NULL, 0, _transfer_samples_from_memory);
             }
+            break;
         }
         default:
             break;
     }
 }
 
+void on_calibration_done(bool success)
+{
+    _add_event(success ? SESSION_EVENT_SUCCESS : SESSION_EVENT_ERROR);
+}
+
+/**
+ * @see session_manager.h
+ */
 status_e session_manager_create(void)
 {
     status_e status = state_machine_create(&_control.sm, session_initial_state, _transition_callback, &_control);
@@ -195,57 +212,70 @@ status_e session_manager_create(void)
     return STATUS_OK;
 }
 
+/**
+ * @see session_manager.h
+ */
 status_e session_manager_get_status(void)
 {
 
     return STATUS_OK;
 }
 
-status_e session_manager_start_sampling(imu_sample_rate_e rate, uint8_t flags, session_destination_e destination, uint32_t session_time)
+/**
+ * @see session_manager.h
+ */
+status_e session_manager_start_stream(imu_sample_rate_e rate, uint8_t flags, uint32_t session_time)
 {
     _control.rate = rate,
     _control.flags = flags,
-    _control.destination = destination;
+    _control.session_time = session_time;
+    _control.stream_enabled = true;
+
+    _add_event(SESSION_EVENT_STREAM);
+
+    return STATUS_OK;
+}
+
+/**
+ * @see session_manager.h
+ */
+status_e session_manager_start_recording(imu_sample_rate_e rate, uint8_t flags, bool stream_enable, uint32_t session_time)
+{
+    _control.rate = rate,
+    _control.flags = flags,
+    _control.stream_enabled = stream_enable;
     _control.session_time = session_time;
 
-    _on_event(SESSION_EVENT_START_SAMPLING);
+    _add_event(SESSION_EVENT_RECORD);
+
     return STATUS_OK;
 }
 
-status_e session_manager_stop_sampling(void)
-{
-    _on_event(SESSION_EVENT_STOP_SAMPLING);
-    return STATUS_OK;
-}
-
+/**
+ * @see session_manager.h
+ */
 status_e session_manager_start_playback(void)
 {
-    _on_event(SESSION_EVENT_START_PLAYBACK);
+    _add_event(SESSION_EVENT_PLAYBACK);
     return STATUS_OK;
 }
 
-status_e session_manager_stop_playback(void)
+/**
+ * @see session_manager.h
+ */
+status_e session_manager_stop(void)
 {
-    _on_event(SESSION_EVENT_STOP_PLAYBACK);
+    _control.stream_enabled = false;
+
+    _add_event(SESSION_EVENT_STOP);
     return STATUS_OK;
 }
 
+/**
+ * @see session_manager.h
+ */
 status_e session_manager_calibrate(void)
 {
-    _on_event(SESSION_EVENT_CALIBRATE);
-    return STATUS_OK;
-}
-
-status_e session_manager_on_calibration_done(bool success)
-{
-    if (success)
-    {
-        _on_event(SESSION_EVENT_SUCCESS);
-    }
-    else
-    {
-        _on_event(SESSION_EVENT_ERROR);
-    }
-
+    _add_event(SESSION_EVENT_CALIBRATE);
     return STATUS_OK;
 }

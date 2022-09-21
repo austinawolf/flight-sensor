@@ -15,6 +15,8 @@
 
 #define COMMAND_PREAMBLE        (0xAA)
 #define RESPONSE_PREAMBLE       (0xBB)
+#define STATE_UPDATE_PREAMBLE   (0xCC)
+
 
 #define HEADER_LENGTH           (sizeof(uint8_t) + sizeof(command_code_e))
 
@@ -26,10 +28,10 @@
 typedef enum
 {
     COMMAND_CODE_GET_STATUS,
-    COMMAND_CODE_START_SAMPLING,
-    COMMAND_CODE_STOP_SAMPLING,
-    COMMAND_CODE_START_PLAYBACK,
-    COMMAND_CODE_STOP_PLAYBACK,
+    COMMAND_CODE_STREAM,
+    COMMAND_CODE_RECORD,
+    COMMAND_CODE_PLAYBACK,
+    COMMAND_CODE_STOP,
     COMMAND_CODE_CALIBRATE,
     COMMAND_CODE_ERROR,
     COMMAND_CODE_MAX_VALUE,
@@ -43,9 +45,20 @@ typedef struct
 {
     imu_sample_rate_e rate;
     uint8_t flags;
-    uint8_t destination;
     uint8_t sampling_time;
-} __attribute__((packed)) command_params_start_t;
+} __attribute__((packed)) command_params_stream_t;
+
+/**
+ * @brief 
+ * 
+ */
+typedef struct
+{
+    imu_sample_rate_e rate;
+    uint8_t flags;
+    bool stream_enable;
+    uint8_t sampling_time;
+} __attribute__((packed)) command_params_record_t;
 
 /**
  * @brief 
@@ -57,7 +70,8 @@ typedef struct
     command_code_e command;
     union
     {
-        command_params_start_t start;
+        command_params_stream_t stream;
+        command_params_record_t record;
     } params;
 } __attribute__((packed)) command_t;
 
@@ -93,5 +107,16 @@ typedef struct
         response_params_error_t error;
     } params;
 } __attribute__((packed)) response_t;
+
+/**
+ * @brief 
+ * 
+ */
+typedef struct
+{
+    uint8_t preamble;
+    uint8_t current;
+    uint8_t previous;
+} __attribute__((packed)) state_update_t;
 
 #endif

@@ -17,11 +17,11 @@
 
 typedef enum
 {
-    SESSION_EVENT_START_SAMPLING,
-    SESSION_EVENT_STOP_SAMPLING,
+    SESSION_EVENT_STREAM,
+    SESSION_EVENT_RECORD,
+    SESSION_EVENT_PLAYBACK,
+    SESSION_EVENT_STOP,
     SESSION_EVENT_TIMEOUT,
-    SESSION_EVENT_START_PLAYBACK,
-    SESSION_EVENT_STOP_PLAYBACK,
     SESSION_EVENT_DISCONNECTED,
     SESSION_EVENT_CALIBRATE,
     SESSION_EVENT_SUCCESS,
@@ -36,12 +36,14 @@ typedef struct
     imu_sample_rate_e rate;
     session_destination_e destination;
     uint8_t flags;
+    bool stream_enabled;
     uint32_t session_time;
     app_timer_id_t timer;
     uint32_t playback_index;
-    bool is_playback;
 } session_manager_control_t;
 
 extern const state_t *session_initial_state;
+
+void on_calibration_done(bool success);
 
 #endif

@@ -3,9 +3,9 @@
  * @author  Austin Wolf
  * @brief
  */
-#include "ble_helper.h"
 #include <stdint.h>
 #include <string.h>
+#include "ble_helper.h"
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_sdm.h"
@@ -189,8 +189,6 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
                      p_evt->conn_handle,
                      p_evt->params.att_mtu_effective);
     }
-
-    ble_imu_on_gatt_evt(&m_imu, p_evt);
 }
 
 
@@ -233,7 +231,6 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Initialize IMU Service.
-    imu_init.evt_handler = NULL;
     err_code = ble_imu_init(&m_imu, &imu_init);
     APP_ERROR_CHECK(err_code);
 
@@ -555,4 +552,9 @@ void ble_helper_advertising_start(bool erase_bonds)
 status_e ble_helper_sample_send(imu_sample_t *sample)
 {
     return ble_imu_sample_send(&m_imu, sample);
+}
+
+status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
+{
+    return ble_imu_send_state_update(&m_imu, current, previous);
 }

@@ -50,23 +50,23 @@ class FlightSensor:
     def deinitialize(self):
         self.client.deinitialize()
 
-    def start_sampling(self, rate: Rate, flags: int, destination: Destination, time: int):
-        response = self.client.start_sampling(rate.value, flags, destination.value, time)
+    def stream(self, rate: Rate, flags: int, time: int):
+        response = self.client.stream(rate.value, flags, time)
         if response.is_error:
             raise Exception(response)
 
-    def stop_sampling(self):
-        response = self.client.stop_sampling()
+    def record(self, rate: Rate, flags: int, stream_enable: bool, time: int):
+        response = self.client.record(rate.value, flags, stream_enable, time)
         if response.is_error:
             raise Exception(response)
 
-    def start_playback(self):
-        response = self.client.start_playback()
+    def playback(self):
+        response = self.client.playback()
         if response.is_error:
             raise Exception(response)
 
-    def stop_playback(self):
-        response = self.client.stop_playback()
+    def stop(self):
+        response = self.client.stop()
         if response.is_error:
             raise Exception(response)
 

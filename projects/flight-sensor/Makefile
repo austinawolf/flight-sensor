@@ -20,6 +20,7 @@ SRC_FILES += \
   $(SOURCE_ROOT)/session_manager/session_state_machine.c \
   $(COMMON_ROOT)/logger/logger.c \
   $(COMMON_ROOT)/ble_imu/ble_imu.c \
+  $(COMMON_ROOT)/ble_imu/ble_imu_encoder.c \
   $(COMMON_ROOT)/icm20948/icm20948.c \
   $(COMMON_ROOT)/imu/imu_icm20948.c \
   $(COMMON_ROOT)/imu/imu_simulated.c \
