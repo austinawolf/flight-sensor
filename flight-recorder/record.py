@@ -4,14 +4,14 @@ from flight_recorder.flight_sensor import FlightSensor
 
 logger = example_utils.setup_logger(level="INFO")
 
-SESSION_TIME = 10
+SESSION_TIME = 3
 
 
 def main():
     flight_sensor = FlightSensor("COM17")
-    flight_sensor.initialize()
+    flight_sensor.connect()
     flight_sensor.record(flight_sensor.Rate.RATE_100_HZ, flight_sensor.Flags.ALL, False, SESSION_TIME)
-    flight_sensor.deinitialize()
+    flight_sensor.disconnect()
 
 
 if __name__ == '__main__':

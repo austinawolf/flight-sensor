@@ -16,7 +16,7 @@ from flight_recorder.packets.data import Data
 logger = logging.getLogger(__name__)
 
 
-class Client:
+class BleImuService:
     DEVICE_NAME = "Flight Sensor"
 
     class UUIDs:
@@ -24,13 +24,12 @@ class Client:
         COMMAND_CHARACTERISTIC = Uuid16("1770")  # Uuid128("d9541770-a7c0-4a17-a548-1e0fa159ad01")
         DATA_CHARACTERISTIC = Uuid16("2aff")  # Uuid128("43192aff-8264-41bb-b660-678c8ec91201")
 
-    def __init__(self, ble_device: BleDevice):
+    def __init__(self):
         """
         :type gattc_service: blatann.gatt.gattc.GattcService
         """
         self._on_data = EventSource("IMU Data Event")
         self._on_response = EventSource("Response Event")
-        self._ble_device = ble_device
         self._service = None
         self._command_characteristic = None
         self._data_characteristic = None
@@ -68,11 +67,11 @@ class Client:
             logger.error("Failed to decode data, stream: [{}]".format(binascii.hexlify(event_args.value)))
             logger.exception(e)
 
-    def initialize(self):
+    def initialize(self, peer):
         # Find Characteristics
-        self._service = self._peer.database.find_service(self.UUIDs.IMU_SERVICE)
-        self._command_characteristic = self._peer.database.find_characteristic(self.UUIDs.COMMAND_CHARACTERISTIC)
-        self._data_characteristic = self._peer.database.find_characteristic(self.UUIDs.DATA_CHARACTERISTIC)
+        self._service = peer.database.find_service(self.UUIDs.IMU_SERVICE)
+        self._command_characteristic = peer.database.find_characteristic(self.UUIDs.COMMAND_CHARACTERISTIC)
+        self._data_characteristic = peer.database.find_characteristic(self.UUIDs.DATA_CHARACTERISTIC)
 
         # Subscribe to Data Characteristic
         self._data_characteristic.subscribe(self._on_data_recieved)

@@ -10,16 +10,16 @@ SESSION_TIME = 10
 
 def main():
     flight_sensor = FlightSensor("COM17")
-    flight_sensor.initialize()
+    flight_sensor.connect()
 
     flight_sensor.stream(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
-    while flight_sensor.client.current_state.value == SessionStates.IDLE.value:
+    while flight_sensor.imu_service.current_state.value == SessionStates.IDLE.value:
         pass
 
-    while flight_sensor.client.current_state.value == SessionStates.STREAMING.value:
+    while flight_sensor.imu_service.current_state.value == SessionStates.STREAMING.value:
         pass
 
-    flight_sensor.deinitialize()
+    flight_sensor.disconnect()
 
 
 if __name__ == '__main__':

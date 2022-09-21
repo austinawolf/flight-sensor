@@ -120,17 +120,13 @@ static status_e _transmit_packet(ble_imu_t * p_imu, ble_imu_packet_t *packet, ui
     return STATUS_OK;
 }
 
-static void _retry_later(ble_imu_t *p_imu, ble_imu_packet_t *packet, uint8_t len)
+static status_e _retry_later(ble_imu_t *p_imu, ble_imu_packet_t *packet, uint8_t len)
 {
     packet_retry_t retry = {0};
     retry.len = len;
     memcpy(&retry.packet, packet, sizeof(ble_imu_packet_t));
 
-    status_e status = queue_append(&p_imu->retry_queue, &retry);
-    if (status != STATUS_OK)
-    {
-        LOG_ERROR("queue_append failed: %d", status);
-    }
+    return queue_append(&p_imu->retry_queue, &retry);
 }
 
 static void _retry(ble_imu_t *p_imu)
@@ -192,7 +188,7 @@ status_e ble_imu_send_state_update(ble_imu_t * p_imu, session_state_e current, s
     if (status == STATUS_ERROR_BUFFER_FULL)
     {
         LOG_WARNING("Buffer full. Will retry later.");
-        _retry_later(p_imu, &packet, packet_len);
+        status = _retry_later(p_imu, &packet, packet_len);
     }
     else if (status != STATUS_OK)
     {
@@ -254,6 +250,8 @@ static void _on_disconnect(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_imu->conn_handle = BLE_CONN_HANDLE_INVALID;
+
+    (void) queue_flush(&p_imu->retry_queue);
 }
 
 /**

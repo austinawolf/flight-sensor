@@ -8,17 +8,17 @@ logger = example_utils.setup_logger(level="INFO")
 
 def main():
     flight_sensor = FlightSensor("COM17")
-    flight_sensor.initialize()
+    flight_sensor.connect()
 
     flight_sensor.playback()
 
-    while flight_sensor.client.current_state == SessionStates.IDLE:
+    while flight_sensor.imu_service.current_state == SessionStates.IDLE:
         pass
 
-    while flight_sensor.client.current_state == SessionStates.PLAYBACK:
+    while flight_sensor.imu_service.current_state == SessionStates.PLAYBACK:
         pass
 
-    flight_sensor.deinitialize()
+    flight_sensor.disconnect()
 
 
 if __name__ == '__main__':
