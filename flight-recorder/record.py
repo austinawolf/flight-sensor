@@ -4,7 +4,7 @@ from flight_recorder.flight_sensor import FlightSensor
 
 logger = example_utils.setup_logger(level="INFO")
 
-SESSION_TIME = 3
+SESSION_TIME = 10
 
 
 def main():

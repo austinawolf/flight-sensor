@@ -1,4 +1,5 @@
 import binascii
+import datetime
 import logging
 from blatann import BleDevice
 from blatann.event_type import EventSource
@@ -12,6 +13,7 @@ from flight_recorder.packets.state_update import StateUpdate
 from flight_recorder.packets.stop import StopCommand
 from flight_recorder.packets.stream import StreamCommand
 from flight_recorder.packets.data import Data
+from flight_recorder.services.ble_imu.session import BleImuSession
 
 logger = logging.getLogger(__name__)
 
@@ -91,3 +93,7 @@ class BleImuService:
 
     def calibrate(self):
         return CalibrateCommand().send(self._command_characteristic)
+
+    def save_report(self, filename: str):
+        session = BleImuSession(datetime.datetime.now(), 0, 0, self._data)
+        session.save_report(filename)

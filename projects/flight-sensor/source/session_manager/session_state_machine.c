@@ -3,6 +3,8 @@
 #include "state_machine.h"
 #include "logger.h"
 #include "imu.h"
+#include "app_scheduler.h"
+
 
 static const state_t _idle;
 static const state_t _streaming;
@@ -10,6 +12,12 @@ static const state_t _recording;
 static const state_t _playback;
 static const state_t _calibrating;
 
+
+static void _calibrate(void * p_event_data, uint16_t event_size)
+{
+    imu_calibrate();
+    on_calibration_done(true);
+}
 
 static void _streaming_on_entry(void *context)
 {
@@ -109,8 +117,7 @@ static void _playback_on_exit(void *context)
 
 static void _calibrate_on_entry(void *context)
 {
-    imu_calibrate();
-    on_calibration_done(true);
+    app_sched_event_put(NULL, 0, _calibrate);
 }
 
 static const state_t _idle =

@@ -4,9 +4,8 @@ from enum import Enum
 from blatann import BleDevice
 from blatann.gap.gap_types import ConnectionParameters
 from blatann.nrf import nrf_events
-
-from flight_recorder.client import Client
-from flight_recorder.services.ble_imu import BleImuService
+from flight_recorder.packets import SessionStates
+from flight_recorder.services.ble_imu.ble_imu import BleImuService
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +106,9 @@ class FlightSensor:
         response = self.imu_service.playback()
         if response.is_error:
             raise Exception(response)
+
+        while self.imu_service.current_state == SessionStates.IDLE:
+            pass
 
     def stop(self):
         response = self.imu_service.stop()

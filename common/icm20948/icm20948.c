@@ -179,6 +179,9 @@ status_e icm20948_create(void)
 	APP_ERROR_CHECK(result);
 	inv_set_slave_compass_id(0x24);
 
+	inv_error_t err = inv_set_gyro_sf(0, 3);
+    APP_ERROR_CHECK(err);
+
     return STATUS_OK;
 }
 

@@ -12,7 +12,7 @@ def main():
     flight_sensor = FlightSensor("COM17")
     flight_sensor.connect()
 
-    flight_sensor.stream(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
+    flight_sensor.stream(flight_sensor.Rate.RATE_10_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
     while flight_sensor.imu_service.current_state.value == SessionStates.IDLE.value:
         pass
 
