@@ -2,6 +2,8 @@ PROJECT_NAME     := qspi_pca10056
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
+PROJ_DIR := .
+ROOT_DIR := ./../../
 COMMON_ROOT := ./../../common
 SDK_ROOT := ./../../nRF5_SDK
 PROJ_DIR := ./
@@ -155,7 +157,7 @@ include $(TEMPLATE_PATH)/Makefile.common
 
 $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
-.PHONY: flash erase
+.PHONY: flash erase vscode_config
 
 # Flash the program
 flash: default
@@ -170,3 +172,7 @@ SDK_CONFIG_FILE := ./config/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
+
+vscode_config:
+	@python -m vscode_ccpp_configurer --path="$(ROOT_DIR)" --includes="$(INC_FOLDERS)"
+	@python -m vscode_ccpp_configurer --path="$(ROOT_DIR)" --defines="$(CFLAGS)" --define-prefix="-D"
