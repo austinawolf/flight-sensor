@@ -1,5 +1,5 @@
 /**
- * @file    logger.h
+ * @file    ble_imu_types.h
  * @author  Austin Wolf
  * @brief
  */
