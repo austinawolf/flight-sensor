@@ -10,8 +10,8 @@ class Data(Packet):
     @classmethod
     def decode(cls, stream: BleDataStream):
         packet_type = stream.decode(ble_data_types.Uint8)
-        index = stream.decode(ble_data_types.Uint8)
-        timestamp = stream.decode(ble_data_types.Uint8)
+        index = stream.decode(ble_data_types.Uint16)
+        timestamp = stream.decode(ble_data_types.Uint32)
         flags = stream.decode(ble_data_types.Uint8)
         q0, q1, q2, q3 = stream.decode_multiple(ble_data_types.Int32, ble_data_types.Int32, ble_data_types.Int32, ble_data_types.Int32)
         g0, g1, g2 = stream.decode_multiple(ble_data_types.Int16, ble_data_types.Int16, ble_data_types.Int16)
