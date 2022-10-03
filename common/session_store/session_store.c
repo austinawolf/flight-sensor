@@ -222,6 +222,9 @@ status_e session_store_open(void)
     return STATUS_OK;
 }
 
+/**
+ * @see sample_store.h
+ */
 status_e session_store_close(void)
 {
     // handle special case where all data is already written out
@@ -255,7 +258,9 @@ status_e session_store_close(void)
     return STATUS_OK;
 }
 
-
+/**
+ * @brief Writes a sample active to buffer
+ */
 static void _write_to_buffer(sector_buffer_t *buffer, const imu_sample_t *data)
 {
     (void) memcpy(&buffer->samples[buffer->header.count], data, sizeof(imu_sample_t));

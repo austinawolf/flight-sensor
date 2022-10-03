@@ -45,8 +45,6 @@ struct state_s
     const transition_t *transitions;
 };
 
-
-
 status_e state_machine_create(state_machine_t *state_machine, const state_t *initial, transition_callback_t transition_callback, void *context);
 
 status_e state_machine_on_event(state_machine_t *state_machine, event_t event);

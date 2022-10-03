@@ -12,6 +12,9 @@
 #include "app_scheduler.h"
 
 
+/**
+ * @brief Forward declaration of states in the session manager state machine
+ */
 static const state_t _idle;
 static const state_t _streaming;
 static const state_t _recording;
@@ -19,12 +22,18 @@ static const state_t _playback;
 static const state_t _calibrating;
 
 
+/**
+ * @brief Scheduler callback to execute calibration
+ */
 static void _calibrate(void * p_event_data, uint16_t event_size)
 {
     imu_calibrate();
     on_calibration_done(true);
 }
 
+/**
+ * @brief Starts streaming
+ */
 static void _streaming_on_entry(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
@@ -47,6 +56,9 @@ static void _streaming_on_entry(void *context)
     imu_start(&config);
 }
 
+/**
+ * @brief Stops streaming
+ */
 static void _streaming_on_exit(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
@@ -60,6 +72,9 @@ static void _streaming_on_exit(void *context)
     }
 }
 
+/**
+ * @brief Starts recording
+ */
 static void _recording_on_entry(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
@@ -89,6 +104,9 @@ static void _recording_on_entry(void *context)
     imu_start(&config);
 }
 
+/**
+ * @brief Stops recording
+ */
 static void _recording_on_exit(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
@@ -109,6 +127,9 @@ static void _recording_on_exit(void *context)
     }
 }
 
+/**
+ * @brief Starts playback
+ */
 static void _playback_on_entry(void *context)
 {
     session_manager_control_t *control = (session_manager_control_t*) context;
@@ -116,16 +137,25 @@ static void _playback_on_entry(void *context)
     control->playback_index = 0u;
 }
 
+/**
+ * @brief Stops playback
+ */
 static void _playback_on_exit(void *context)
 {
     
 }
 
+/**
+ * @brief Starts calibration
+ */
 static void _calibrate_on_entry(void *context)
 {
     app_sched_event_put(NULL, 0, _calibrate);
 }
 
+/**
+ * @brief Definition of idle state
+ */
 static const state_t _idle =
 {
     .name = "IDLE",
@@ -143,6 +173,9 @@ static const state_t _idle =
     }
 };
 
+/**
+ * @brief Definition of streaming state
+ */
 static const state_t _streaming =
 {
     .name = "STREAMING",
@@ -160,6 +193,9 @@ static const state_t _streaming =
     }
 };
 
+/**
+ * @brief Definition of recording state
+ */
 static const state_t _recording =
 {
     .name = "RECORDING",
@@ -176,6 +212,9 @@ static const state_t _recording =
     }
 };
 
+/**
+ * @brief Definition of playback state
+ */
 static const state_t _playback =
 {
     .name = "PLAYBACK",
@@ -192,6 +231,9 @@ static const state_t _playback =
     }
 };
 
+/**
+ * @brief Definition of calibrating state
+ */
 static const state_t _calibrating =
 {
     .name = "CALIBRATING",
@@ -207,5 +249,7 @@ static const state_t _calibrating =
     }
 };
 
-
+/**
+ * @brief Pointer to state to initialize session state machine in
+ */
 const state_t *session_initial_state = &_idle;

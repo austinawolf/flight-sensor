@@ -27,7 +27,7 @@ typedef struct
     void *context;
 } flash_control_t;
 
-// Flas control block, initialized on #flash_create
+/* Flash control block, initialized on #flash_create */
 static flash_control_t _control = {0};
 
 /**
@@ -212,6 +212,9 @@ status_e flash_is_busy(bool *is_busy)
     return STATUS_OK;
 }
 
+/**
+ * @see flash.h
+ */
 status_e flash_register_event_handler(flash_event_callback_t callback, void *context)
 {
     _control.callback = callback;
