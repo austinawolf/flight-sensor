@@ -37,9 +37,10 @@
 1. Connect a `PCA10056` Nordic Dev Board to the PC using the main USB port
 2. On the power switch select `VDD`
 3. Navigate to `flight-sensor/flight-recorder/image`
-4. Run `nrfjprog --eraseall --program connectivity_4.1.4_usb_with_s132_5.1.0.hex --verify` to program the Nordic connectivity image to the device
-5. Connect the USB cable to the side USB port labeled `nRF USB`
-6. In `Device Manager` on your PC, verify `Nordic Semiconductor DFU` appears
+4. Run `nrfjprog --eraseall` to erase the device
+5. Run `nrfjprog --program connectivity_4.1.4_usb_with_s132_5.1.0.hex --verify` to program the Nordic connectivity image to the device
+6. Connect the USB cable to the side USB port labeled `nRF USB`
+7. In `Device Manager` on your PC, verify `Nordic Semiconductor DFU` appears
 
 <br />
 
