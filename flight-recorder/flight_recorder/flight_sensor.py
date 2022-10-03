@@ -4,10 +4,15 @@ from enum import Enum
 from blatann import BleDevice
 from blatann.gap.gap_types import ConnectionParameters
 from blatann.nrf import nrf_events
-from flight_recorder.packets import SessionStates
+
+from flight_recorder.packets.state_update import SessionStates
 from flight_recorder.services.ble_imu.ble_imu import BleImuService
 
 logger = logging.getLogger(__name__)
+
+
+RESPONSE_TIMEOUT = 2
+STATE_UPDATE_TIMEOUT = 2
 
 
 class FlightSensor:
@@ -93,29 +98,39 @@ class FlightSensor:
             self._peer.disconnect().wait()
 
     def stream(self, rate: Rate, flags: int, time: int):
-        response = self.imu_service.stream(rate.value, flags, time)
+        response = self.imu_service.stream(rate, flags, time)
+        if response.is_error:
+            raise Exception(f"Response error: {response.status}")
+
+        self.imu_service.on_state_update(SessionStates.STREAMING).wait(STATE_UPDATE_TIMEOUT)
+
+    def record(self, rate: Rate, flags: int, stream_enable: bool, time: int):
+        response = self.imu_service.record(rate, flags, stream_enable, time)
         if response.is_error:
             raise Exception(response)
 
-    def record(self, rate: Rate, flags: int, stream_enable: bool, time: int):
-        response = self.imu_service.record(rate.value, flags, stream_enable, time)
-        if response.is_error:
-            raise Exception(response)
+        self.imu_service.on_state_update(SessionStates.RECORDING).wait(STATE_UPDATE_TIMEOUT)
 
     def playback(self):
         response = self.imu_service.playback()
         if response.is_error:
             raise Exception(response)
 
-        while self.imu_service.current_state == SessionStates.IDLE:
-            pass
+        self.imu_service.on_state_update(SessionStates.PLAYBACK).wait(STATE_UPDATE_TIMEOUT)
 
     def stop(self):
         response = self.imu_service.stop()
         if response.is_error:
             raise Exception(response)
 
+        self.imu_service.on_state_update(SessionStates.IDLE).wait(STATE_UPDATE_TIMEOUT)
+
     def calibrate(self):
         response = self.imu_service.calibrate()
         if response.is_error:
             raise Exception(response)
+
+        self.imu_service.on_state_update(SessionStates.CALIBRATING).wait(STATE_UPDATE_TIMEOUT)
+
+    def wait_for_idle(self, timeout=STATE_UPDATE_TIMEOUT):
+        self.imu_service.on_state_update(SessionStates.IDLE).wait(timeout)
