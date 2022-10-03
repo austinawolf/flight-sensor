@@ -24,7 +24,8 @@
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
 
 
-/**@brief Function for putting the chip into sleep mode.
+/**
+ * @brief Function for putting the chip into sleep mode.
  *
  * @note This function will not return.
  */
@@ -45,6 +46,9 @@ static void sleep_mode_enter(void)
 }
 
 
+/**
+ * @brief Handler for event from BLE helper
+ */
 static void _ble_helper_event_handler(ble_helper_event_e event)
 {
     uint32_t err_code = 0u;
@@ -67,6 +71,9 @@ static void _ble_helper_event_handler(ble_helper_event_e event)
     }
 }
 
+/**
+ * @brief Initializes Nordic drivers/modules
+ */
 static void initialize(void)
 {
     ret_code_t err_code;
@@ -89,7 +96,8 @@ static void initialize(void)
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for application main entry.
+/**
+ * @brief Function for application main entry.
  */
 int main(void)
 {
@@ -113,7 +121,6 @@ int main(void)
     while (true)
     {
         app_sched_execute();
-
         if (NRF_LOG_PROCESS() == false)
         {
             nrf_pwr_mgmt_run();

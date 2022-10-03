@@ -14,9 +14,14 @@
 #include "logger.h"
 
 
+/**
+ * @brief Stores event callback, NULL if unused
+ */
 static icm20948_event_callback_t _event_callback = NULL;
 
-
+/**
+ * @brief Executes event callback, if registered
+ */
 static void _icm_event_callback(void)
 {
 	if (_event_callback != NULL)
@@ -26,9 +31,7 @@ static void _icm_event_callback(void)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_create(void)
 {	

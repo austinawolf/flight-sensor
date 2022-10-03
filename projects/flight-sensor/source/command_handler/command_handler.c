@@ -10,7 +10,7 @@
 
 
 /**
- *
+ * Helper function to load response packet
  */
 static void _load_response(ble_imu_opcode_e opcode, status_e status, response_payload_t *response, uint8_t *response_len)
 {

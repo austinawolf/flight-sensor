@@ -1,5 +1,5 @@
 /**
- * @file    logger.h
+ * @file    session_manager_internal.h
  * @author  Austin Wolf
  * @brief
  */
@@ -15,6 +15,9 @@
 #include "session_store.h"
 
 
+/**
+ * @brief Events used by the session event state machine
+ */
 typedef enum
 {
     SESSION_EVENT_STREAM,
@@ -30,11 +33,13 @@ typedef enum
     SESSION_EVENT_FLASH_FULL,
 } session_event_e;
 
+/**
+ * @brief Definition of control structure used by the session manager/state machine
+ */
 typedef struct
 {
     state_machine_t sm;
     imu_sample_rate_e rate;
-    session_destination_e destination;
     uint8_t flags;
     bool stream_enabled;
     uint32_t session_time;
@@ -42,8 +47,14 @@ typedef struct
     uint32_t playback_index;
 } session_manager_control_t;
 
+/**
+ * @brief Pointer to inital state of the session state machine
+ */
 extern const state_t *session_initial_state;
 
+/**
+ * @brief Executed by the calibration callback to indicate calibration is complete
+ */
 void on_calibration_done(bool success);
 
 #endif

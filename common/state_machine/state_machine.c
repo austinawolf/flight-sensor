@@ -7,6 +7,9 @@
 #include "status.h"
 #include "logger.h"
 
+/**
+ * @see state_machine.h
+ */
 status_e state_machine_create(state_machine_t *state_machine, const state_t *initial, transition_callback_t transition_callback, void *context)
 {
     state_machine->current = initial;
@@ -17,6 +20,9 @@ status_e state_machine_create(state_machine_t *state_machine, const state_t *ini
     return STATUS_OK;
 }
 
+/**
+ * @brief Finds the transition associated with the event for the current state
+ */
 static const transition_t *_get_transition(state_machine_t *state_machine, uint32_t event)
 {
     uint8_t i = 0u;
@@ -39,6 +45,9 @@ static const transition_t *_get_transition(state_machine_t *state_machine, uint3
 
 }
 
+/**
+ * @see state_machine.h
+ */
 status_e state_machine_on_event(state_machine_t *state_machine, event_t event)
 {
     const transition_t *transition = _get_transition(state_machine, event);

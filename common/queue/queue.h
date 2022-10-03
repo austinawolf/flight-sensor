@@ -19,7 +19,6 @@ typedef struct
     uint32_t num_entries;       /**< Current number of entries in the queue */
 } queue_t;
 
-
 /**
  * Creates a queue with the parameters given. It utilizes static storage by having the caller
  * pass in the array to store the data in
@@ -30,7 +29,7 @@ typedef struct
  * @param   array_length  the length of the array
  * @param   data_size     the size of one entry in the array
  *
- * @return  Status_OK if successful, #queue_status_e otherwise
+ * @return  STATUS_OK if successful, #queue_status_e otherwise
  */
 status_e queue_create(queue_t* queue, void* array, uint32_t array_length, uint32_t data_size);
 
@@ -40,7 +39,7 @@ status_e queue_create(queue_t* queue, void* array, uint32_t array_length, uint32
  * @param   queue       the queue to append the data to
  * @param   data        the data to add to the queue.  It is assumed that the data size matches the data size passed in on create
  *
- * @return  Status_OK if successful, #queue_status_e otherwise
+ * @return  STATUS_OK if successful, #queue_status_e otherwise
  */
 status_e queue_append(queue_t* queue, const void* data);
 
@@ -51,7 +50,7 @@ status_e queue_append(queue_t* queue, const void* data);
  * @param   offset      the offset from the head of the queue to pop out. A value of 0 will pop the head of the queue
  * @param   data        pointer to store the data.  It is assumed that the data size matches the data size passed in on create
  *
- * @return  Status_OK if successful, #queue_status_e otherwise
+ * @return  STATUS_OK if successful, #queue_status_e otherwise
  */
 status_e queue_pop(queue_t* queue, uint32_t offset, void* data);
 
@@ -62,7 +61,7 @@ status_e queue_pop(queue_t* queue, uint32_t offset, void* data);
  * @param   offset  the offset to get from the beginning of queue. A value of 0 will inspect the current head of the queue
  * @param   data    pointer to store the data.  It is assumed that the data size matches the data size passed in on create
  *
- * @return  Status_OK if successful, #queue_status_e otherwise
+ * @return  STATUS_OK if successful, #queue_status_e otherwise
  */
 status_e queue_inspect(const queue_t* queue, uint32_t offset, void* data);
 
@@ -72,10 +71,9 @@ status_e queue_inspect(const queue_t* queue, uint32_t offset, void* data);
  *
  * @param   queue  the queue to flush
  *
- * @return  Status_OK if successful, #queue_status_e otherwise
+ * @return  STATUS_OK if successful, #queue_status_e otherwise
  */
 status_e queue_flush(queue_t* queue);
-
 
 /**
  * Gets the number of entries currently in the queue
@@ -85,7 +83,6 @@ status_e queue_flush(queue_t* queue);
  * @return  the number of entries in the queue
  */
 uint32_t queue_number_of_entries(const queue_t* queue);
-
 
 /**
  * Checks if a given queue is empty

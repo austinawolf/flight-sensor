@@ -16,39 +16,34 @@
 
 
 /**
- * @brief 
- * 
+ * @brief Log a message at error level
  */
-#define LOG_ERROR       NRF_LOG_ERROR
+#define LOG_ERROR NRF_LOG_ERROR
 
 /**
- * @brief 
- * 
+ * @brief Log a message at warning level
  */
-#define LOG_WARNING     NRF_LOG_WARNING
+#define LOG_WARNING NRF_LOG_WARNING
 
 /**
- * @brief 
- * 
+ * @brief Log a message at info level
  */
-#define LOG_INFO        NRF_LOG_INFO
+#define LOG_INFO NRF_LOG_INFO
 
 /**
- * @brief 
- * 
+ * @brief Log a message at debug level
  */
-#define LOG_DEBUG       NRF_LOG_DEBUG
+#define LOG_DEBUG NRF_LOG_DEBUG
 
 /**
- * @brief 
- * 
+ * @brief Flush any buffered logs
  */
-#define LOG_FLUSH       NRF_LOG_FLUSH
+#define LOG_FLUSH NRF_LOG_FLUSH
 
 /**
- * @brief 
+ * @brief Initializes the logger
  * 
- * @return status_e 
+ * @return STATUS_OK on success 
  */
 status_e logger_create(void);
 

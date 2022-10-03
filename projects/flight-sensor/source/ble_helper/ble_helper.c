@@ -1,8 +1,9 @@
 /**
- * @file    logger.c
+ * @file    ble_helper.c
  * @author  Austin Wolf
- * @brief
+ * @brief   Module to initialize BLE stack and manage BLE services
  */
+
 #include <stdint.h>
 #include <string.h>
 #include "ble_helper.h"
@@ -35,27 +36,20 @@
 #include "logger.h"
 
 
-#define MAX_EVENT_HANDLERS      (4u)
-
 #define DEVICE_NAME                         "Flight Sensor"                         /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                   "Austin Wolf"                           /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                    300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 #define APP_ADV_DURATION                    60000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
-
 #define APP_BLE_CONN_CFG_TAG                1                                       /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_OBSERVER_PRIO               3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-
-#define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Minimum acceptable connection interval (0.4 seconds). */
-#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)        /**< Maximum acceptable connection interval (0.65 second). */
+#define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)         /**< Minimum acceptable connection interval (0.4 seconds). */
+#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(10, UNIT_1_25_MS)         /**< Maximum acceptable connection interval (0.65 second). */
 #define SLAVE_LATENCY                       0                                       /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS(4000, UNIT_10_MS)         /**< Connection supervisory timeout (4 seconds). */
-
 #define FIRST_CONN_PARAMS_UPDATE_DELAY      APP_TIMER_TICKS(5000)                   /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY       APP_TIMER_TICKS(30000)                  /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT        3                                       /**< Number of attempts before giving up the connection parameter negotiation. */
-
 #define LESC_DEBUG_MODE                     0                                       /**< Set to 1 to use LESC debug keys, allows you to use a sniffer to inspect traffic. */
-
 #define SEC_PARAM_BOND                      1                                       /**< Perform bonding. */
 #define SEC_PARAM_MITM                      0                                       /**< Man In The Middle protection not required. */
 #define SEC_PARAM_LESC                      1                                       /**< LE Secure Connections enabled. */
@@ -64,29 +58,36 @@
 #define SEC_PARAM_OOB                       0                                       /**< Out Of Band data not available. */
 #define SEC_PARAM_MIN_KEY_SIZE              7                                       /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE              16                                      /**< Maximum encryption key size. */
-
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define MAX_EVENT_HANDLERS                  (4u)                                    /**< Max number of BLE Helper event handlers that can be registered */
 
+/**< Heart rate service instance. */
+BLE_IMU_DEF(m_imu);                        
 
-BLE_IMU_DEF(m_imu);                                                 /**< Heart rate service instance. */
-NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
-NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
-BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
+/**< GATT module instance. */
+NRF_BLE_GATT_DEF(m_gatt); 
 
-static uint16_t m_conn_handle         = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
+/**< Context for the Queued Write module.*/
+NRF_BLE_QWR_DEF(m_qwr);       
 
+/**< Advertising module instance. */
+BLE_ADVERTISING_DEF(m_advertising);
+
+/**< Handle of the current connection. */
+static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;    
+
+/**< List of event handlers to execute when BLE helper event has occured*/
 static uint8_t _event_handler_count = 0u;
 static ble_helper_event_handler_t _event_handlers[MAX_EVENT_HANDLERS] = {0};
 
-static ble_uuid_t m_adv_uuids[] =                                   /**< Universally unique service identifiers. */
+/**< Universally unique service identifiers. */
+static ble_uuid_t m_adv_uuids[] =                                   
 {
     {BLE_UUID_IMU_SERVICE,           BLE_UUID_TYPE_BLE},
 };
 
-
 /**
- * @brief 
- * 
+ * @brief Helper function to execute all registered event handlers
  */
 static void _on_event(ble_helper_event_e event)
 {
@@ -96,7 +97,8 @@ static void _on_event(ble_helper_event_e event)
     }
 }
 
-/**@brief Callback function for asserts in the SoftDevice.
+/**
+ * @brief Callback function for asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
  *
@@ -115,7 +117,7 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 
 /**@brief Clear bond information from persistent storage.
  */
-static void delete_bonds(void)
+static void _delete_bonds(void)
 {
     ret_code_t err_code;
 
@@ -129,7 +131,7 @@ static void delete_bonds(void)
  *
  * @param[in] p_evt  Peer Manager event.
  */
-static void pm_evt_handler(pm_evt_t const * p_evt)
+static void _pm_evt_handler(pm_evt_t const * p_evt)
 {
     pm_handler_on_pm_evt(p_evt);
     pm_handler_disconnect_on_sec_failure(p_evt);
@@ -151,7 +153,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
  *          device including the device name, appearance, and the preferred connection parameters.
  */
-static void gap_params_init(void)
+static void _gap_params_init(void)
 {
     ret_code_t              err_code;
     ble_gap_conn_params_t   gap_conn_params;
@@ -178,10 +180,10 @@ static void gap_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief GATT module event handler.
+/**
+ * @brief GATT module event handler.
  */
-static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
+static void _gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
 {
     if (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED)
     {
@@ -191,15 +193,13 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
     }
 }
 
-
 /**@brief Function for initializing the GATT module.
  */
-static void gatt_init(void)
+static void _gatt_init(void)
 {
-    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, gatt_evt_handler);
+    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, _gatt_evt_handler);
     APP_ERROR_CHECK(err_code);
 }
-
 
 /**@brief Function for handling Queued Write Module errors.
  *
@@ -208,17 +208,17 @@ static void gatt_init(void)
  *
  * @param[in]   nrf_error   Error code containing information about what went wrong.
  */
-static void nrf_qwr_error_handler(uint32_t nrf_error)
+static void _nrf_qwr_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
 
-
-/**@brief Function for initializing services that will be used by the application.
+/**
+ * @brief Function for initializing services that will be used by the application.
  *
  * @details Initialize the Heart Rate, Battery and Device Information services.
  */
-static void services_init(void)
+static void _services_init(void)
 {
     ret_code_t         err_code = {0};
     ble_imu_init_t     imu_init = {0};
@@ -226,7 +226,7 @@ static void services_init(void)
     nrf_ble_qwr_init_t qwr_init = {0};
 
     // Initialize Queued Write Module.
-    qwr_init.error_handler = nrf_qwr_error_handler;
+    qwr_init.error_handler = _nrf_qwr_error_handler;
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
@@ -243,17 +243,18 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for handling the Connection Parameters Module.
+/**
+ * @brief Function for handling the Connection Parameters Module.
  *
  * @details This function will be called for all events in the Connection Parameters Module which
  *          are passed to the application.
- *          @note All this function does is to disconnect. This could have been done by simply
- *                setting the disconnect_on_fail config parameter, but instead we use the event
- *                handler mechanism to demonstrate its use.
+ *  @note   All this function does is to disconnect. This could have been done by simply
+ *          setting the disconnect_on_fail config parameter, but instead we use the event
+ *          handler mechanism to demonstrate its use.
  *
  * @param[in] p_evt  Event received from the Connection Parameters Module.
  */
-static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
+static void _on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 {
     ret_code_t err_code;
 
@@ -264,8 +265,8 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
     }
 }
 
-
-/**@brief Function for handling a Connection Parameters error.
+/**
+ * @brief Function for handling a Connection Parameters error.
  *
  * @param[in] nrf_error  Error code containing information about what went wrong.
  */
@@ -274,10 +275,10 @@ static void conn_params_error_handler(uint32_t nrf_error)
     APP_ERROR_HANDLER(nrf_error);
 }
 
-
-/**@brief Function for initializing the Connection Parameters module.
+/**
+ * @brief Function for initializing the Connection Parameters module.
  */
-static void conn_params_init(void)
+static void _conn_params_init(void)
 {
     ret_code_t             err_code;
     ble_conn_params_init_t cp_init;
@@ -290,20 +291,21 @@ static void conn_params_init(void)
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
     cp_init.start_on_notify_cccd_handle    = m_imu.command_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
-    cp_init.evt_handler                    = on_conn_params_evt;
+    cp_init.evt_handler                    = _on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
 
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for handling advertising events.
+/**
+ * @brief Function for handling advertising events.
  *
  * @details This function will be called for advertising events which are passed to the application.
  *
  * @param[in] ble_adv_evt  Advertising event.
  */
-static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
+static void _on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
     switch (ble_adv_evt)
     {
@@ -319,12 +321,13 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
-/**@brief Function for handling BLE events.
+/**
+ * @brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
  * @param[in]   p_context   Unused.
  */
-static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
+static void _ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ret_code_t err_code;
 
@@ -413,11 +416,12 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     }
 }
 
-/**@brief Function for initializing the BLE stack.
+/**
+ * @brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
  */
-static void ble_stack_init(void)
+static void _ble_stack_init(void)
 {
     ret_code_t err_code;
 
@@ -435,12 +439,13 @@ static void ble_stack_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Register a handler for BLE events.
-    NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
+    NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, _ble_evt_handler, NULL);
 }
 
-/**@brief Function for the Peer Manager initialization.
+/**
+ * @brief Function for the Peer Manager initialization.
  */
-static void peer_manager_init(void)
+static void _peer_manager_init(void)
 {
     ble_gap_sec_params_t sec_param;
     ret_code_t           err_code;
@@ -467,14 +472,15 @@ static void peer_manager_init(void)
     err_code = pm_sec_params_set(&sec_param);
     APP_ERROR_CHECK(err_code);
 
-    err_code = pm_register(pm_evt_handler);
+    err_code = pm_register(_pm_evt_handler);
     APP_ERROR_CHECK(err_code);
 }
 
 
-/**@brief Function for initializing the Advertising functionality.
+/**
+ * @brief Function for initializing the Advertising functionality.
  */
-static void advertising_init(void)
+static void _advertising_init(void)
 {
     ret_code_t             err_code;
     ble_advertising_init_t init;
@@ -491,7 +497,7 @@ static void advertising_init(void)
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
     init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
 
-    init.evt_handler = on_adv_evt;
+    init.evt_handler = _on_adv_evt;
 
     err_code = ble_advertising_init(&m_advertising, &init);
     APP_ERROR_CHECK(err_code);
@@ -499,28 +505,26 @@ static void advertising_init(void)
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
-
-
-
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see ble_helper.h
  */
 status_e ble_helper_create(void)
 {
     // Initialize.
-    ble_stack_init();
-    gap_params_init();
-    gatt_init();
-    services_init();
-    advertising_init();
-    conn_params_init();
-    peer_manager_init();
+    _ble_stack_init();
+    _gap_params_init();
+    _gatt_init();
+    _services_init();
+    _advertising_init();
+    _conn_params_init();
+    _peer_manager_init();
  
     return STATUS_OK;
 }
 
+/**
+ * @see ble_helper.h
+ */
 status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler)
 {
     if (_event_handler_count >= MAX_EVENT_HANDLERS)
@@ -533,11 +537,14 @@ status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler)
     return STATUS_ERROR;
 }
 
+/**
+ * @see ble_helper.h
+ */
 void ble_helper_advertising_start(bool erase_bonds)
 {
     if (erase_bonds == true)
     {
-        delete_bonds();
+        _delete_bonds();
         // Advertising is started by PM_EVT_PEERS_DELETE_SUCCEEDED event.
     }
     else
@@ -549,11 +556,17 @@ void ble_helper_advertising_start(bool erase_bonds)
     }
 }
 
+/**
+ * @see ble_helper.h
+ */
 status_e ble_helper_sample_send(imu_sample_t *sample)
 {
     return ble_imu_sample_send(&m_imu, sample);
 }
 
+/**
+ * @see ble_helper.h
+ */
 status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
 {
     return ble_imu_send_state_update(&m_imu, current, previous);

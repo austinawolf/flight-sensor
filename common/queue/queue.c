@@ -19,7 +19,6 @@ static inline void* _queue_get_data_location_at_offset(const queue_t* queue, uin
     return (queue->data_array + (i * queue->data_size)); /*lint !e124 !e9016 pointer arithmetic accounts for element size */
 }
 
-
 /**
  * @see queue_api.h
  */
@@ -144,7 +143,6 @@ status_e queue_inspect(const queue_t* queue, uint32_t offset, void* data)
     return STATUS_OK;
 }
 
-
 /**
  * @see queue_api.h
  */
@@ -161,7 +159,6 @@ status_e queue_flush(queue_t* queue)
     return STATUS_OK;
 }
 
-
 /**
  * @see queue_api.h
  */
@@ -174,7 +171,6 @@ uint32_t queue_number_of_entries(const queue_t* queue)
 
     return queue->num_entries;
 }
-
 
 /**
  * @see queue_api.h

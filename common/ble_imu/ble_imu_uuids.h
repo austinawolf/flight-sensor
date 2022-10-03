@@ -1,3 +1,9 @@
+/**
+ * @file    ble_imu_uuids.h
+ * @author  Austin Wolf
+ * @brief
+ */
+
 #ifndef BLE_IMU_UUIDS_H__
 #define BLE_IMU_UUIDS_H__
 

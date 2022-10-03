@@ -16,7 +16,7 @@
 static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 /**
- * @brief TWI initialization.
+ * @see twi.h
  */
 void twi_init(void)
 {
@@ -36,9 +36,8 @@ void twi_init(void)
     nrf_drv_twi_enable(&m_twi);
 }
 
-
 /**
- * @brief Twi Scan. Checks every address for a slave.
+ * @see twi.h
  */
 int twi_scan(void)
 {
@@ -59,7 +58,7 @@ int twi_scan(void)
 }
 
 /**
- * @brief TWI Write.
+ * @see twi.h
  */
 int twi_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char const *data) {	
 	ret_code_t err_code;
@@ -76,7 +75,7 @@ int twi_write(unsigned char slave_addr, unsigned char reg_addr, unsigned char le
 }
 
 /**
- * @brief TWI Read.
+ * @see twi.h
  */
 int twi_read(unsigned char slave_addr, unsigned char reg_addr, unsigned char length, unsigned char *data) {
 	ret_code_t err_code;
