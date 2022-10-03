@@ -1,3 +1,9 @@
+/**
+ * @file    ble_imu.c
+ * @author  Austin Wolf
+ * @brief
+ */
+
 #include "sdk_common.h"
 #include "ble_imu.h"
 #include <string.h>
@@ -10,7 +16,7 @@
 
 
 /**
- *
+ * @see ble_imu.h
  */
 status_e ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
 {
@@ -89,14 +95,14 @@ status_e ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
 }
 
 /**
- *
+ * @brief Send a packet as a notification
  */
 static status_e _transmit_packet(ble_imu_t * p_imu, ble_imu_packet_t *packet, uint8_t len)
 {
     uint16_t hvx_len = (uint16_t) len;
     ble_gatts_hvx_params_t hvx_params = 
     {
-        .handle = packet->header.preamble == IMU_PREAMBLE_DATA ? p_imu->data_handles.value_handle : p_imu->command_handles.value_handle,
+        .handle = packet->header.preamble == BLE_IMU_PREAMBLE_DATA ? p_imu->data_handles.value_handle : p_imu->command_handles.value_handle,
         .type = BLE_GATT_HVX_NOTIFICATION,
         .offset = 0,
         .p_len = &hvx_len,
@@ -120,6 +126,9 @@ static status_e _transmit_packet(ble_imu_t * p_imu, ble_imu_packet_t *packet, ui
     return STATUS_OK;
 }
 
+/**
+ * @brief Save a notification to retry later
+ */
 static status_e _retry_later(ble_imu_t *p_imu, ble_imu_packet_t *packet, uint8_t len)
 {
     packet_retry_t retry = {0};
@@ -129,6 +138,9 @@ static status_e _retry_later(ble_imu_t *p_imu, ble_imu_packet_t *packet, uint8_t
     return queue_append(&p_imu->retry_queue, &retry);
 }
 
+/**
+ * @brief Try to transmit a packet from the retry buffer 
+ */
 static void _retry(ble_imu_t *p_imu)
 {
     status_e status = STATUS_OK;
@@ -153,6 +165,9 @@ static void _retry(ble_imu_t *p_imu)
     }
 }
 
+/**
+ * @see ble_imu.h
+ */
 status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
 {
     // Send value if connected and notifying
@@ -173,6 +188,9 @@ status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample)
     return status;
 }
 
+/**
+ * @see ble_imu.h
+ */
 status_e ble_imu_send_state_update(ble_imu_t * p_imu, session_state_e current, session_state_e previous)
 {
     if (p_imu->conn_handle == BLE_CONN_HANDLE_INVALID)
@@ -198,7 +216,7 @@ status_e ble_imu_send_state_update(ble_imu_t * p_imu, session_state_e current, s
 }
 
 /**
- *
+ * @brief Function called to decode process a new command and send a response
  */
 static void _on_command_value_write(ble_imu_t * p_imu, ble_gatts_evt_write_t const * p_evt_write)
 {
@@ -235,16 +253,15 @@ static void _on_command_value_write(ble_imu_t * p_imu, ble_gatts_evt_write_t con
 }
 
 /**
- * Function for handling the Connect event.
+ * @brief Function for handling the Connect event.
  */
 static void _on_connect(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 {
     p_imu->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 }
 
-
 /**
- * Function for handling the Disconnect event.
+ * @brief Function for handling the Disconnect event.
  */
 static void _on_disconnect(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 {
@@ -255,7 +272,7 @@ static void _on_disconnect(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 }
 
 /**
- * 
+ * @brief Helper function to execute when data is written to one of the characteristics in the BLE IMU service
  */
 static void _on_write(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 {
@@ -267,7 +284,7 @@ static void _on_write(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
 }
 
 /**
- *
+ * @see ble_imu.h
  */
 void ble_imu_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {

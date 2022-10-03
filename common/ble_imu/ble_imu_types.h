@@ -11,14 +11,20 @@
 #include <stdbool.h>
 
 
+/**
+ * @brief Possible preambles to a packet
+ */
 typedef enum
 {
-    IMU_PREAMBLE_COMMAND = 0xAA,
-    IMU_PREAMBLE_RESPONSE = 0xBB,
-    IMU_PREAMBLE_STATE_UPDATE = 0xCC,
-    IMU_PREAMBLE_DATA = 0xDD,
+    BLE_IMU_PREAMBLE_COMMAND = 0xAA,
+    BLE_IMU_PREAMBLE_RESPONSE = 0xBB,
+    BLE_IMU_PREAMBLE_STATE_UPDATE = 0xCC,
+    BLE_IMU_PREAMBLE_DATA = 0xDD,
 } ble_imu_preamble_t;
 
+/**
+ * @brief Possible command opcodes
+ */
 typedef enum
 {
     COMMAND_CODE_GET_STATUS,
@@ -31,6 +37,9 @@ typedef enum
     COMMAND_CODE_MAX_VALUE,
 } ble_imu_opcode_e;
 
+/**
+ * @brief Definition of command packet
+ */
 typedef struct
 {
     uint8_t opcode;
@@ -49,18 +58,27 @@ typedef struct
     };
 } __attribute__((packed)) command_payload_t;
 
+/**
+ * @brief Definition of response packet
+ */
 typedef struct
 {
     uint8_t opcode;
     uint8_t status;
 } __attribute__((packed)) response_payload_t;
 
+/**
+ * @brief Definition of state update packet
+ */
 typedef struct
 {
     uint8_t current;
     uint8_t previous; 
 } __attribute__((packed)) state_update_payload_t;
 
+/**
+ * @brief Definition of data packet
+ */
 typedef struct
 {
     uint16_t index;
@@ -72,11 +90,17 @@ typedef struct
     int16_t compass[3];
 } __attribute__((packed)) data_payload_t;
 
+/**
+ * @brief Definition of header to all packets
+ */
 typedef struct
 {
     uint8_t preamble;
 } __attribute__((packed)) ble_imu_packet_header_t;
 
+/**
+ * @brief Definition of IMU packet
+ */
 typedef struct
 {
     ble_imu_packet_header_t header;
@@ -88,11 +112,5 @@ typedef struct
         data_payload_t data;
     };
 } __attribute__((packed)) ble_imu_packet_t;
-
-typedef struct
-{
-    ble_imu_packet_t packet;
-    uint8_t len;
-} packet_retry_t;
 
 #endif

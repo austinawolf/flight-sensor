@@ -1,5 +1,5 @@
 /**
- * @file    logger.h
+ * @file    session_manager_internal.h
  * @author  Austin Wolf
  * @brief
  */

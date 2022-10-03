@@ -1,3 +1,9 @@
+/**
+ * @file    session_state_machine.h
+ * @author  Austin Wolf
+ * @brief
+ */
+
 #include "session_manager_internal.h"
 #include "session_manager.h"
 #include "state_machine.h"

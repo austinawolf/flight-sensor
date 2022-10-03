@@ -1,5 +1,5 @@
 /**
- * @file    logger.c
+ * @file    session_manager.c
  * @author  Austin Wolf
  * @brief
  */
