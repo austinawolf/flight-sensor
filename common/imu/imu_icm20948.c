@@ -42,9 +42,7 @@ status_e imu_create(void)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_start(imu_config_t *config)
 {   
@@ -66,9 +64,7 @@ status_e imu_start(imu_config_t *config)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_stop(void)
 {
@@ -77,6 +73,9 @@ status_e imu_stop(void)
     return STATUS_OK;
 }
 
+/**
+ * @see imu.h
+ */
 status_e imu_sample_read(imu_sample_t *sample, bool *sample_ready)
 {	icm20948_data_t data = {0};
 	icm20948_read(&data, sample_ready);
@@ -107,8 +106,7 @@ status_e imu_sample_read(imu_sample_t *sample, bool *sample_ready)
 }
 
 /**
- * @brief 
- * 
+ * @see imu.h
  */
 status_e imu_register_callback(imu_event_callback_t callback)
 {
@@ -117,6 +115,9 @@ status_e imu_register_callback(imu_event_callback_t callback)
     return STATUS_OK;
 }
 
+/**
+ * @see imu.h
+ */
 status_e imu_calibrate(void)
 {
 	icm20948_calibrate();
