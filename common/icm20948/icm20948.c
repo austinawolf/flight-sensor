@@ -37,6 +37,9 @@ static bool _compass_enabled = true;
 static bool _quat_enabled = true;
 
 
+/**
+ * @brief Executes event callback if registered
+ */
 static void _on_sample_ready(void)
 {
 	if (_event_callback != NULL)
@@ -45,11 +48,17 @@ static void _on_sample_ready(void)
 	}
 }
 
+/**
+ * @brief interrupt singal handler that indicates a sample is ready
+ */
 static void pin_change_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) 
 {
 	_on_sample_ready();
 }
 
+/**
+ * @brief Gets a sample from the icm20948 sample buffer
+ */
 static status_e _get_sample(icm20948_data_t *data, bool *sample_ready)
 {
 	unsigned short header = 0, header2 = 0;
@@ -159,9 +168,7 @@ static status_e _get_sample(icm20948_data_t *data, bool *sample_ready)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see icm20948.h
  */
 status_e icm20948_create(void)
 {
@@ -186,9 +193,7 @@ status_e icm20948_create(void)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see icm20948.h
  */
 status_e icm20948_start(void)
 {    
@@ -223,9 +228,7 @@ status_e icm20948_start(void)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see icm20948.h
  */
 status_e icm20948_stop(void)
 {
@@ -249,6 +252,9 @@ status_e icm20948_stop(void)
     return STATUS_OK;
 }
 
+/**
+ * @see icm20948.h
+ */
 status_e icm20948_set_rate(uint16_t rate) 
 {	
 	/* set output rate */
@@ -279,11 +285,17 @@ status_e icm20948_set_rate(uint16_t rate)
 	return STATUS_ERROR;
 }
 
+/**
+ * @see icm20948.h
+ */
 status_e icm20948_read(icm20948_data_t *data, bool *sample_ready)
 {
 	return _get_sample(data, sample_ready);
 }
 
+/**
+ * @see icm20948.h
+ */
 status_e icm20948_calibrate(void) {
 	int self_test_result = 0;
 	int dmp_bias[9] = { 0 };
@@ -323,8 +335,7 @@ status_e icm20948_calibrate(void) {
 }
 
 /**
- * @brief 
- * 
+ * @see icm20948.h
  */
 status_e icm20948_register_event_callback(icm20948_event_callback_t callback)
 {

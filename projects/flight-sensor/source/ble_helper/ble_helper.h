@@ -30,7 +30,6 @@ typedef enum
 
 /**
  * @brief Definition of BLE helper event handler callback
- * 
  */
 typedef void (*ble_helper_event_handler_t) (ble_helper_event_e event);
 

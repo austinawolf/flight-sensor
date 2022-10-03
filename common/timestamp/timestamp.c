@@ -8,27 +8,22 @@
 
 
 /**
- * @brief 
- * 
+ * @brief Time of a single tick, in milliseconds
  */
 #define TICK_PERIOD_MS (1u)
 
 /**
  * @brief Construct a new app timer def object
- * 
  */
 APP_TIMER_DEF(m_timer);
 
 /**
- * @brief 
- * 
+ * @brief Total elapsed time
  */
 static volatile uint32_t _time_elapsed_ms = 0u;
 
 /**
- * @brief 
- * 
- * @param p_context 
+ * @brief callback for timer tick
  */
 static void _on_tick(void * p_context)
 {

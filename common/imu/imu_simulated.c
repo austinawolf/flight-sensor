@@ -10,26 +10,14 @@
 #include "app_timer.h"
 #include "timestamp.h"
 
-
 APP_TIMER_DEF(m_sample_timer_id);
 
 
-/**
- * @brief 
- * 
- */
 static imu_sample_callback_t _sample_callback = NULL;
-
-/**
- * @brief 
- * 
- */
 static imu_sample_flags_e _flags = 0u;
 
 /**
- * @brief 
- * 
- * @param p_context 
+ * @brief
  */
 static void sampling_timer_timeout_handler(void * p_context)
 {
@@ -54,9 +42,7 @@ static void sampling_timer_timeout_handler(void * p_context)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_create(void)
 {
@@ -72,9 +58,7 @@ status_e imu_create(void)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_start(imu_config_t *config)
 {    
@@ -101,9 +85,7 @@ status_e imu_start(imu_config_t *config)
 }
 
 /**
- * @brief 
- * 
- * @return status_e 
+ * @see imu.h
  */
 status_e imu_stop(void)
 {
@@ -117,8 +99,7 @@ status_e imu_stop(void)
 }
 
 /**
- * @brief 
- * 
+ * @see imu.h
  */
 status_e imu_sample_read(imu_sample_t *sample)
 {
@@ -142,8 +123,7 @@ status_e imu_sample_read(imu_sample_t *sample)
 }
 
 /**
- * @brief 
- * 
+ * @see imu.h
  */
 status_e imu_register_sample_callback(imu_sample_callback_t callback)
 {

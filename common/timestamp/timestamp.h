@@ -13,21 +13,21 @@
 
 
 /**
- * @brief 
+ * @brief Initializes and starts the timestamp timer
  * 
  * @return status_e 
  */
 status_e timestamp_create(void);
 
 /**
- * @brief 
+ * @brief Stops the timestamp timer
  * 
  * @return status_e 
  */
 status_e timestamp_destory(void);
 
 /**
- * @brief 
+ * @brief Gets the number of milliseconds since boot
  * 
  * @return uint32_t 
  */

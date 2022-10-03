@@ -11,8 +11,7 @@
 
 
 /**
- * @brief 
- * 
+ * @brief Macro to assert error status
  */
 #define ASSERT_STATUS(ERR_CODE)                             \
     do                                                      \
@@ -25,7 +24,7 @@
     } while (0)
 
 /**
- *
+ * Possible status codes
  */
 typedef enum {
     STATUS_OK,
