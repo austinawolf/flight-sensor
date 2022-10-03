@@ -1,34 +1,37 @@
-import binascii
-import logging
-import struct
 from enum import Enum
 
-from flight_recorder.packets import SessionStates
+from blatann.services import ble_data_types
+from blatann.services.ble_data_types import BleDataStream
 
-logger = logging.getLogger(__name__)
+from flight_recorder.packets import Packet, PacketType
 
 
-class StateUpdate:
-    FORMAT = "<BBB"
-    PREAMBLE = 0xCC
+class SessionStates(Enum):
+    IDLE = 0
+    STREAMING = 1
+    RECORDING = 2
+    PLAYBACK = 3
+    CALIBRATING = 4
+    ERROR = 5
+
+
+class StateUpdate(Packet):
+    TYPE = PacketType.STATE_UPDATE
 
     @classmethod
-    def from_bytes(cls, buffer):
-        args = struct.unpack(cls.FORMAT, buffer)
-        preamble, current, previous = args
+    def decode(cls, stream: BleDataStream):
+        packet_type = stream.decode(ble_data_types.Uint8)
+        current_state = stream.decode(ble_data_types.Uint8)
+        previous_state = stream.decode(ble_data_types.Uint8)
 
-        if preamble != cls.PREAMBLE:
+        if packet_type != cls.TYPE.value:
             raise Exception
 
-        return cls(current, previous)
+        return cls(SessionStates(current_state), SessionStates(previous_state))
 
-    def __init__(self, current, previous):
-        self.current: SessionStates = SessionStates(current)
-        self.previous: SessionStates = SessionStates(previous)
+    def __init__(self, current_state: SessionStates, previous_state: SessionStates):
+        self.current_state = current_state
+        self.previous_state = previous_state
 
-    def __repr__(self):
-        return f"current={self.current}, " \
-               f"previous={self.previous}"
-
-    def __str__(self):
-        return self.__repr__()
+    def encode(self) -> BleDataStream:
+        raise NotImplementedError

@@ -1,35 +1,31 @@
-import binascii
-import logging
-import struct
 from enum import Enum
+from blatann.services import ble_data_types
+from blatann.services.ble_data_types import BleDataStream
+from flight_recorder.packets import Packet, PacketType
 
-logger = logging.getLogger(__name__)
 
-
-class Data:
-    FORMAT = "<BHIBllllhhhhhhhhh"
-    PREAMBLE = 0xDD
+class Data(Packet):
+    TYPE = PacketType.DATA
 
     @classmethod
-    def from_bytes(cls, buffer):
-        args = struct.unpack(cls.FORMAT, buffer)
+    def decode(cls, stream: BleDataStream):
+        packet_type = stream.decode(ble_data_types.Uint8)
+        index = stream.decode(ble_data_types.Uint8)
+        timestamp = stream.decode(ble_data_types.Uint8)
+        flags = stream.decode(ble_data_types.Uint8)
+        q0, q1, q2, q3 = stream.decode_multiple(ble_data_types.Int32, ble_data_types.Int32, ble_data_types.Int32, ble_data_types.Int32)
+        g0, g1, g2 = stream.decode_multiple(ble_data_types.Int16, ble_data_types.Int16, ble_data_types.Int16)
+        a0, a1, a2 = stream.decode_multiple(ble_data_types.Int16, ble_data_types.Int16, ble_data_types.Int16)
+        c0, c1, c2 = stream.decode_multiple(ble_data_types.Int16, ble_data_types.Int16, ble_data_types.Int16)
 
-        preamble, index, \
-        timestamp, \
-        flags, \
-        q0, q1, q2, q3, \
-        g0, g1, g2, \
-        a0, a1, a2, \
-        c0, c1, c2 = args
-
-        if preamble != cls.PREAMBLE:
+        if packet_type != cls.TYPE.value:
             raise Exception
 
         return cls(flags, index, timestamp,
-                   [q0, q1, q2, q3],
-                   [g0, g1, g2],
-                   [a0, a1, a2],
-                   [c0, c1, c2])
+                   (q0, q1, q2, q3),
+                   (g0, g1, g2),
+                   (a0, a1, a2),
+                   (c0, c1, c2))
 
     def __init__(self, flags, index, timestamp, quat, gyro, accel, compass):
         self.flags = flags
@@ -48,3 +44,6 @@ class Data:
 
     def __str__(self):
         return self.__repr__()
+
+    def encode(self) -> BleDataStream:
+        raise NotImplementedError
