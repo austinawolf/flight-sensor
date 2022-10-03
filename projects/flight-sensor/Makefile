@@ -3,10 +3,10 @@ TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
 PROJ_DIR := .
-ROOT_DIR := ./../../
-COMMON_ROOT := ./../../common
-SDK_ROOT := ./../../nRF5_SDK
-EXTERNAL_ROOT := ./../../external
+ROOT_DIR := $(PROJ_DIR)/../../
+COMMON_ROOT := $(ROOT_DIR)/common
+SDK_ROOT := $(ROOT_DIR)/nRF5_SDK
+EXTERNAL_ROOT := $(ROOT_DIR)/external
 SOURCE_ROOT := $(PROJ_DIR)/source
 BUILD_DIR := $(ROOT_DIR)/build
 
@@ -439,9 +439,15 @@ TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
 
 include $(TEMPLATE_PATH)/Makefile.common
 
+SDK_CONFIG_FILE := ./config/sdk_config.h
+CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
+
 $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
-.PHONY: flash flash_softdevice erase vscode_config
+.PHONY: flash flash_softdevice erase setup vscode
+
+setup:
+	@pip install vscode-c-dev --find-links="$(ROOT_DIR)/libs"
 
 # Flash the program
 flash: default
@@ -458,11 +464,9 @@ flash_softdevice:
 erase:
 	nrfjprog -f nrf52 --eraseall
 
-SDK_CONFIG_FILE := ./config/sdk_config.h
-CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
 
-vscode_config:
-	@python -m vscode_ccpp_configurer --path="$(ROOT_DIR)" --includes="$(INC_FOLDERS)"
-	@python -m vscode_ccpp_configurer --path="$(ROOT_DIR)" --defines="$(CFLAGS)" --define-prefix="-D"
+vscode:
+	@python -m vscode_c_dev --path="$(ROOT_DIR)" --includes="$(INC_FOLDERS)"
+	@python -m vscode_c_dev --path="$(ROOT_DIR)" --defines="$(CFLAGS)" --define-prefix="-D"
