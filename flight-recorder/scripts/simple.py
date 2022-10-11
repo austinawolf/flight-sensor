@@ -1,26 +1,20 @@
 import time
-from flight_analysis.animator import Animator
+from flight_analysis.animators.pyvista import PyVistaAnimator
 
 
 def main():
-    animator = Animator()
+    animator = PyVistaAnimator()
     animator.start()
-    #
-    # while True:
-    #     roll = int(input("Roll: "))
-    #     pitch = int(input("Pitch: "))
-    #     yaw = int(input("Yaw: "))
-    #     animator.set_rotation(yaw, -pitch, -roll)
 
     i = 0
     try:
         while True:
-            roll = i
-            pitch = i
+            roll = 0
+            pitch = 0
             yaw = i
-            animator.set_rotation(yaw, -pitch, -roll)
+            animator.set_rotation(roll, pitch, yaw)
             i = i + 1 if i < 360 else 0
-            time.sleep(0.01)
+            time.sleep(0.001)
     except Exception:
         pass
     finally:

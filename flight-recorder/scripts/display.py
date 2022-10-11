@@ -1,4 +1,4 @@
-from flight_analysis.animator import Animator
+from flight_analysis.animators.pyvista import PyVistaAnimator
 from blatann.examples import example_utils
 from flight_recorder.flight_sensor import FlightSensor
 from flight_recorder.packets.data import Data
@@ -6,7 +6,7 @@ from flight_recorder.services.ble_imu.session import Quaternion
 
 
 logger = example_utils.setup_logger(level="WARNING")
-animator = Animator()
+animator = PyVistaAnimator()
 
 
 def on_data(data: Data):

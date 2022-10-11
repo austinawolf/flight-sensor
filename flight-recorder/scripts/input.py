@@ -1,16 +1,15 @@
-import time
-from flight_analysis.animator import Animator
+from flight_analysis.animators.pyvista import PyVistaAnimator
 
 
 def main():
-    animator = Animator()
+    animator = PyVistaAnimator()
     animator.start()
 
     while True:
         roll = float(input("Roll: "))
         pitch = float(input("Pitch: "))
         yaw = float(input("Yaw: "))
-        animator.set_rotation(yaw, -pitch, -roll)
+        animator.set_rotation(roll, pitch, yaw)
 
 
 main()

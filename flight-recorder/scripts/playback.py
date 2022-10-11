@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass
 
-from flight_analysis.animator import Animator
+from flight_analysis.animators.animator import Animator
 
 
 @dataclass
