@@ -1,0 +1,3 @@
+[submodule "flight-analysis/vedo"]
+	path = flight-analysis/vedo
+	url = https://github.com/marcomusy/vedo.git

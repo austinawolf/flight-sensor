@@ -73,7 +73,7 @@ class BleImuSession:
                    "gyro_x", "gyro_y", "gyro_z",
                    "accel_x", "accel_y", "accel_z",
                    "compass_x", "compass_y", "compass_z",
-                   "q0", "q1", "q2", "q3", "X", "Y", "Z"]
+                   "q0", "q1", "q2", "q3", "Roll", "Pitch", "Yaw"]
 
         sheet.write_row(0, 0, headers)
 
