@@ -59,7 +59,7 @@ class Stream(Command):
         stream.encode(ble_data_types.Uint8, self.opcode.value)
         stream.encode(ble_data_types.Uint8, self.rate.value)
         stream.encode(ble_data_types.Uint8, self.flags)
-        stream.encode(ble_data_types.Uint8, self.sampling_time)
+        stream.encode(ble_data_types.Uint16, self.sampling_time)
         return stream
 
 
