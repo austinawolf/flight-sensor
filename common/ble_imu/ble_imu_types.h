@@ -47,13 +47,13 @@ typedef struct
         struct {
             uint8_t rate;
             uint8_t flags;
-            uint8_t sampling_time;
+            uint16_t sampling_time;
         } stream;
         struct {
             uint8_t rate;
             uint8_t flags;
             uint8_t stream_enable;
-            uint8_t sampling_time;
+            uint16_t sampling_time;
         } record;
     };
 } __attribute__((packed)) command_payload_t;
