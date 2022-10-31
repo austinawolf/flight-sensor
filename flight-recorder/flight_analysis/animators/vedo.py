@@ -1,33 +1,80 @@
+import copy
+import math
 import threading
-from vedo import load, Plotter
-from flight_analysis.animators import AnimatorBase, Orientation
+from dataclasses import dataclass
+from typing import Tuple
+
+from vedo import load, Plotter, Mesh, dataurl, Arrow
+from flight_analysis.animators import AnimatorBase
+
+
+@dataclass
+class Orientation2:
+    theta: float
+    v: Tuple[float, float, float]
 
 
 class VedoAnimator(AnimatorBase):
-    MODEL_PATH = 'flight_analysis/animators/assembly.STL'
-
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.plt = Plotter(axes=1, interactive=False)
-        self.obj = self.load_object()
-        self.orientation = Orientation.from_degrees(0, 0, 0)
-        if self.obj is None:
+    def __init__(self, model):
+        if model is None:
             raise FileNotFoundError()
+        threading.Thread.__init__(self)
+
+        self.plt = Plotter(axes=1, interactive=False)
+        self.obj = model
+        self.orientation = None
+        self._callback = None
+        self._x = 0.0
+        self._y = 0.0
+        self._z = 0.0
+        self.setup_sliders()
         self._run = True
 
-    def load_object(self):
-        return load(self.MODEL_PATH)
+    def on_x(self, widget, event):
+        self._x = widget.GetRepresentation().GetValue()
+        self._update()
 
-    def set_rotation(self, roll, pitch, yaw):
-        self.orientation = Orientation.from_degrees(roll, pitch, yaw)
+    def on_y(self, widget, event):
+        self._y = widget.GetRepresentation().GetValue()
+        self._update()
 
-        self.obj.orientation(self.orientation.vector, rotation=0, rad=True)
-        self.orientation = None
+    def on_z(self, widget, event):
+        self._z = widget.GetRepresentation().GetValue()
+        self._update()
+
+    def _update(self):
+        if self._callback:
+            self._callback(self._x, self._y, self._z)
+
+    def setup_sliders(self):
+        min_value = -180
+        max_value = 180
+        value = 0
+        self.plt.addSlider2D(self.on_x, min_value, max_value, value=value, title="x", pos=2)
+        self.plt.addSlider2D(self.on_y, min_value, max_value, value=value, title="y", pos=3)
+        self.plt.addSlider2D(self.on_z, min_value, max_value, value=value, title="z", pos=4)
+
+    def set_orientation(self, quat):
+        theta = math.acos(quat[0]) * 2.0
+        if math.sin(theta / 1.0) == 0.0:
+            x = 0.0
+            y = 0.0
+            z = 0.0
+        else:
+            x = quat[1] / math.sqrt(1 - quat[0] * quat[0])
+            y = quat[2] / math.sqrt(1 - quat[0] * quat[0])
+            z = quat[3] / math.sqrt(1 - quat[0] * quat[0])
+        print(theta, x, y, z)
+        self.orientation = Orientation2(theta, (x, y, z))
+
+    def on_event(self, callback):
+        self._callback = callback
 
     def run(self):
         while self._run:
             if self.orientation is not None:
-
+                self.obj.orientation(self.orientation.v, rotation=self.orientation.theta, rad=True)
+                self.orientation = None
             self.plt.show(self.obj)
 
     def kill(self):

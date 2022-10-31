@@ -1,22 +1,21 @@
 import time
 from dataclasses import dataclass
-
-from flight_analysis.animators.animator import Animator
+from typing import Tuple
+from flight_analysis.animators.vedo import VedoAnimator
+from flight_recorder.services.ble_imu.session import Quaternion
 
 
 @dataclass
 class Frame:
     timestamp: int
-    roll: float
-    pitch: float
-    yaw: float
+    quat: Tuple[float, float, float, float]
 
 
 def main():
-    file = open("throw2.csv", "r")
+    file = open("./recordings/throw2.csv", "r")
     lines = file.readlines()[1:]
 
-    animator = Animator()
+    animator = VedoAnimator()
     animator.start()
 
     frames = []
@@ -27,13 +26,17 @@ def main():
         cx, cy, cz, \
         q0, q1, q2, q3, \
         roll, pitch, yaw = line.split(",")
-        frames.append(Frame(int(timestamp), float(roll), float(pitch), float(yaw)))
+
+        quat = Quaternion((float(q0), float(q1), float(q2), float(q3)))
+        quat.normalize()
+
+        frames.append(Frame(int(timestamp), (float(quat.q0), float(quat.q1), float(quat.q2), float(quat.q3))))
 
     start_index = 913
     stop_index = 1352
 
     for frame in frames[start_index: stop_index]:
-        animator.set_rotation(frame.yaw, -frame.pitch, -frame.roll)
+        animator.set_orientation(frame.quat)
         time.sleep(0.10)
 
     animator.kill()
