@@ -85,7 +85,7 @@ class Record(Command):
         stream.encode(ble_data_types.Uint8, self.rate.value)
         stream.encode(ble_data_types.Uint8, self.flags)
         stream.encode(ble_data_types.Uint8, 1 if self.stream_enable else 0)
-        stream.encode(ble_data_types.Uint8, self.sampling_time)
+        stream.encode(ble_data_types.Uint16, self.sampling_time)
         return stream
 
 
