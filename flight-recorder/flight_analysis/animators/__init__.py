@@ -1,5 +1,12 @@
 import threading
-from enum import Enum
+from dataclasses import dataclass
+from typing import Tuple
+
+
+@dataclass
+class Orientation:
+    theta: float
+    v: Tuple[float, float, float]
 
 
 class AnimatorBase(threading.Thread):

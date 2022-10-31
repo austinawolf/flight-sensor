@@ -64,7 +64,7 @@ class BleImuService:
         self.data_stream.on_next(data)
 
     def _on_state_update(self, state_update: StateUpdate):
-        logger.info(f"State Update: {state_update.current_state.name} -> {state_update.previous_state.name}")
+        logger.info(f"State Update: {state_update.previous_state.name} -> {state_update.current_state.name}")
         self._state_update.on_next(state_update)
 
     def initialize(self, peer):

@@ -5,23 +5,14 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from vedo import load, Plotter, Mesh, dataurl, Arrow
-from flight_analysis.animators import AnimatorBase
-
-
-@dataclass
-class Orientation2:
-    theta: float
-    v: Tuple[float, float, float]
+from flight_analysis.animators import AnimatorBase, Orientation
 
 
 class VedoAnimator(AnimatorBase):
-    def __init__(self, model):
-        if model is None:
-            raise FileNotFoundError()
+    def __init__(self):
         threading.Thread.__init__(self)
-
         self.plt = Plotter(axes=1, interactive=False)
-        self.obj = model
+        self.obj = self.load_object()
         self.orientation = None
         self._callback = None
         self._x = 0.0
@@ -29,6 +20,13 @@ class VedoAnimator(AnimatorBase):
         self._z = 0.0
         self.setup_sliders()
         self._run = True
+
+    @staticmethod
+    def load_object():
+        obj = load('flight_analysis/models/assembly.STL').c("red")
+        if obj is None:
+            raise RuntimeError
+        return obj
 
     def on_x(self, widget, event):
         self._x = widget.GetRepresentation().GetValue()
@@ -64,8 +62,8 @@ class VedoAnimator(AnimatorBase):
             x = quat[1] / math.sqrt(1 - quat[0] * quat[0])
             y = quat[2] / math.sqrt(1 - quat[0] * quat[0])
             z = quat[3] / math.sqrt(1 - quat[0] * quat[0])
-        print(theta, x, y, z)
-        self.orientation = Orientation2(theta, (x, y, z))
+        print(f"Axis-Angle: {theta, x, y, z}")
+        self.orientation = Orientation(theta, (x, y, z))
 
     def on_event(self, callback):
         self._callback = callback

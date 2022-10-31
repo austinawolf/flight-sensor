@@ -27,10 +27,13 @@ class Quaternion:
 
     def normalize(self):
         magnitude = self.magnitude()
-        self.q0 /= magnitude
-        self.q1 /= magnitude
-        self.q2 /= magnitude
-        self.q3 /= magnitude
+        try:
+            self.q0 /= magnitude
+            self.q1 /= magnitude
+            self.q2 /= magnitude
+            self.q3 /= magnitude
+        except ZeroDivisionError:
+            pass
 
     def magnitude(self):
         return math.sqrt(self.q0 ** 2 + self.q1 ** 2 + self.q2 ** 2 + self.q3 ** 2)
