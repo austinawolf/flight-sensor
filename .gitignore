@@ -1,3 +1,6 @@
 .vscode/*
 **/_build/*
 *.pyc
+
+# Flight Recorder
+flight-recorder/recordings/*
