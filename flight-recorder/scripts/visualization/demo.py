@@ -17,7 +17,7 @@ def on_event(roll, pitch, yaw):
 
 def main():
     global animator
-    config = AnimatorConfig(lib="vedo", model="disc")
+    config = AnimatorConfig(lib="pyvista")
     factory = AnimatorFactory(config)
     animator = factory.create_animator()
     animator.on_event(on_event)

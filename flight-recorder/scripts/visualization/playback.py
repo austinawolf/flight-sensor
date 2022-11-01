@@ -1,7 +1,8 @@
 import time
 from dataclasses import dataclass
 from typing import Tuple
-from flight_analysis.animators.vedo import VedoAnimator
+
+from flight_analysis.factory.animator_factory import AnimatorConfig, AnimatorFactory
 from flight_recorder.services.ble_imu.session import Quaternion
 
 
@@ -15,7 +16,9 @@ def main():
     file = open("./recordings/throw2.csv", "r")
     lines = file.readlines()[1:]
 
-    animator = VedoAnimator()
+    config = AnimatorConfig(lib="pyvista")
+    factory = AnimatorFactory(config)
+    animator = factory.create_animator()
     animator.start()
 
     frames = []

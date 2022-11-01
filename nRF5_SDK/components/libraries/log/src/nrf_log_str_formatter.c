@@ -141,11 +141,11 @@ static void postfix_process(nrf_log_str_formatter_entry_params_t * p_params,
         {
             nrf_fprintf(p_ctx, "%s", m_colors[0]);
         }
-        nrf_fprintf(p_ctx, "\r\n");
+        nrf_fprintf(p_ctx, "\n");
     }
     else if (newline)
     {
-        nrf_fprintf(p_ctx, "\r\n");
+        nrf_fprintf(p_ctx, "\n");
     }
     nrf_fprintf_buffer_flush(p_ctx);
 }

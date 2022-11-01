@@ -248,6 +248,8 @@ status_e session_manager_start_stream(imu_sample_rate_e rate, uint8_t flags, uin
 
     _add_event(SESSION_EVENT_STREAM);
 
+    LOG_INFO("Start Stream: rate=%d, flags=%d, session_time=%d", rate, flags, session_time);
+
     return STATUS_OK;
 }
 
@@ -261,6 +263,8 @@ status_e session_manager_start_recording(imu_sample_rate_e rate, uint8_t flags, 
     _control.stream_enabled = stream_enable;
     _control.session_time = session_time;
 
+    LOG_INFO("Start Recording: rate=%d, flags=%d, stream_enabled=%d, session_time=%d", rate, flags, stream_enable, session_time);
+
     _add_event(SESSION_EVENT_RECORD);
 
     return STATUS_OK;
@@ -271,7 +275,10 @@ status_e session_manager_start_recording(imu_sample_rate_e rate, uint8_t flags, 
  */
 status_e session_manager_start_playback(void)
 {
+    LOG_INFO("Start Playback");
+
     _add_event(SESSION_EVENT_PLAYBACK);
+
     return STATUS_OK;
 }
 
@@ -282,7 +289,10 @@ status_e session_manager_stop(void)
 {
     _control.stream_enabled = false;
 
+    LOG_INFO("Stop");
+
     _add_event(SESSION_EVENT_STOP);
+
     return STATUS_OK;
 }
 
@@ -291,6 +301,9 @@ status_e session_manager_stop(void)
  */
 status_e session_manager_calibrate(void)
 {
+    LOG_INFO("Calibrate");
+
     _add_event(SESSION_EVENT_CALIBRATE);
+    
     return STATUS_OK;
 }

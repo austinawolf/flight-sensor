@@ -9,7 +9,7 @@ from flight_analysis.animators import AnimatorBase, Orientation
 
 
 class VedoAnimator(AnimatorBase):
-    def __init__(self):
+    def __init__(self, enable_sliders):
         threading.Thread.__init__(self)
         self.plt = Plotter(axes=1, interactive=False)
         self.obj = self.load_object()
@@ -18,7 +18,8 @@ class VedoAnimator(AnimatorBase):
         self._x = 0.0
         self._y = 0.0
         self._z = 0.0
-        self.setup_sliders()
+        if enable_sliders:
+            self.setup_sliders()
         self._run = True
 
     @staticmethod

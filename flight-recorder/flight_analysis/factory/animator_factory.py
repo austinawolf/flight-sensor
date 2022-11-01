@@ -1,10 +1,6 @@
 from flight_analysis.animators.pyvista import PyVistaAnimator
 from flight_analysis.animators.vedo import VedoAnimator
-
-
-class AnimatorConfig:
-    def __init__(self, lib="vedo"):
-        self.lib = lib
+from flight_analysis.config.flight_analysis_config import AnimatorConfig
 
 
 class AnimatorFactory:
@@ -15,6 +11,6 @@ class AnimatorFactory:
         if self.config.lib == "vedo":
             return VedoAnimator()
         elif self.config.lib == "pyvista":
-            return PyVistaAnimator()
+            return PyVistaAnimator(self.config)
         else:
             raise ValueError(self.config.lib)

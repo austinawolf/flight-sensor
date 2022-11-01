@@ -5,7 +5,7 @@ from flight_recorder.flight_sensor import FlightSensor
 logger = example_utils.setup_logger(level="INFO")
 
 SESSION_TIME = 10
-OUTPUT_DIR = "./streams"
+OUTPUT_DIR = "../../streams"
 
 
 def main():
