@@ -186,8 +186,8 @@ status_e icm20948_create(void)
     APP_ERROR_CHECK(result);
     inv_set_slave_compass_id(0x24);
 
-    inv_error_t err = inv_set_gyro_sf(0, 3);
-    APP_ERROR_CHECK(err);
+    // inv_error_t err = inv_set_gyro_sf(0, 3);
+    // APP_ERROR_CHECK(err);
 
     return STATUS_OK;
 }
@@ -330,7 +330,7 @@ status_e icm20948_calibrate(void) {
     /* Update bias on DMP memory */
     dmp_set_bias(dmp_bias);
     LOG_INFO("\r\nSetting the DMP biases with one-axis factory calibration values...done\r\n");
-    
+
     return STATUS_OK;
 }
 

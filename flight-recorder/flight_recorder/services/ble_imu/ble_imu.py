@@ -50,6 +50,7 @@ class BleImuService:
         self._data_characteristic = None
         self._data = []
         self._state_update = BehaviorSubject(StateUpdate(SessionStates.IDLE, SessionStates.IDLE))
+        self.data_stream = BehaviorSubject(None)
         self.transport = BleImuTransportLayer(self._transmit, self._on_data, self._on_state_update)
 
     def _on_notification(self, char, event_args):
@@ -60,6 +61,7 @@ class BleImuService:
 
     def _on_data(self, data: Data):
         self._data.append(data)
+        self.data_stream.on_next(data)
 
     def _on_state_update(self, state_update: StateUpdate):
         logger.info(f"State Update: {state_update.previous_state.name} -> {state_update.current_state.name}")

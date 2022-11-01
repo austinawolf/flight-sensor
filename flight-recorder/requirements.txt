@@ -1,3 +1,6 @@
 blatann
 rx
 xlsxwriter
+vedo
+pyvista
+

@@ -11,6 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 class Quaternion:
+    @classmethod
+    def from_euler(cls, roll, pitch, yaw):
+        q0 = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.sin(pitch / 2) * math.sin(yaw / 2)
+        q1 = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(roll / 2) * math.sin(pitch / 2) * math.sin(yaw / 2)
+        q2 = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2)
+        q3 = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2)
+        return cls((q0, q1, q2, q3))
+
     def __init__(self, quat):
         self.q0 = quat[0]
         self.q1 = quat[1]
@@ -19,13 +27,20 @@ class Quaternion:
 
     def normalize(self):
         magnitude = self.magnitude()
-        self.q0 /= magnitude
-        self.q1 /= magnitude
-        self.q2 /= magnitude
-        self.q3 /= magnitude
+        try:
+            self.q0 /= magnitude
+            self.q1 /= magnitude
+            self.q2 /= magnitude
+            self.q3 /= magnitude
+        except ZeroDivisionError:
+            pass
 
     def magnitude(self):
         return math.sqrt(self.q0 ** 2 + self.q1 ** 2 + self.q2 ** 2 + self.q3 ** 2)
+
+    @property
+    def tuple(self):
+        return self.q0, self.q1, self.q2, self.q3
 
     @property
     def roll(self):
@@ -73,7 +88,7 @@ class BleImuSession:
                    "gyro_x", "gyro_y", "gyro_z",
                    "accel_x", "accel_y", "accel_z",
                    "compass_x", "compass_y", "compass_z",
-                   "q0", "q1", "q2", "q3", "X", "Y", "Z"]
+                   "q0", "q1", "q2", "q3", "Roll", "Pitch", "Yaw"]
 
         sheet.write_row(0, 0, headers)
 

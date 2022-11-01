@@ -4,7 +4,7 @@ from flight_recorder.flight_sensor import FlightSensor
 
 logger = example_utils.setup_logger(level="INFO")
 
-OUTPUT_DIR = "./recordings"
+OUTPUT_DIR = "../../recordings"
 
 
 def main():

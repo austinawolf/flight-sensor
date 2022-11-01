@@ -97,7 +97,7 @@ class FlightSensor:
         if self._peer:
             self._peer.disconnect().wait()
 
-    def stream(self, rate: Rate, flags: int, time: int):
+    def stream(self, rate: Rate, flags: int, time: int = 0):
         response = self.imu_service.stream(rate, flags, time)
         if response.is_error:
             raise Exception(f"Response error: {response.status}")
