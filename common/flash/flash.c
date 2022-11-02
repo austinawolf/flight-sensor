@@ -121,15 +121,29 @@ status_e flash_create(void)
 /**
  * @see flash.h
  */
-status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
+status_e flash_read(flash_instance_t *instance, uint32_t sector, uint32_t offset, uint8_t *data, uint32_t len)
 {
     if (_control.is_busy)
     {
         return STATUS_ERROR_INVALID_STATE;
     }
 
+    if (sector >= instance->len)
+    {
+        return STATUS_ERROR_INVALID_PARAM;
+    }
+
+    if (offset >= FLASH_SECTOR_SIZE)
+    {
+        return STATUS_ERROR_INVALID_PARAM;
+    }
+
+    uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
+
     _control.next_event = FLASH_EVENT_READ_DONE;
     _control.is_busy = true;
+    _control.callback = instance->event_callback;
+    _control.context = instance;
 
     uint32_t err_code = nrf_drv_qspi_read(data, len, address);
     if (err_code != NRF_SUCCESS)
@@ -143,17 +157,31 @@ status_e flash_read(uint32_t address, uint8_t *data, uint32_t len)
 /**
  * @see flash.h
  */
-status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len)
+status_e flash_write(flash_instance_t *instance, uint32_t sector, uint32_t offset, const uint8_t *data, uint32_t len)
 {
-    LOG_DEBUG("Flash write: address=%d, data=%p, len=%d", address, data, len);
-
     if (_control.is_busy)
     {
         return STATUS_ERROR_INVALID_STATE;
     }
 
+    if (sector >= instance->len)
+    {
+        return STATUS_ERROR_INVALID_PARAM;
+    }
+
+    if (offset >= FLASH_SECTOR_SIZE)
+    {
+        return STATUS_ERROR_INVALID_PARAM;
+    }
+
+    uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
+
+    LOG_INFO("Flash write: address=%d, data=%p, len=%d", address, data, len);
+
     _control.next_event = FLASH_EVENT_WRITE_DONE;
     _control.is_busy = true;
+    _control.callback = instance->event_callback;
+    _control.context = instance;
 
     uint32_t err_code = nrf_drv_qspi_write(data, len, address);
     if (err_code != NRF_SUCCESS)
@@ -167,14 +195,21 @@ status_e flash_write(uint32_t address, const uint8_t *data, uint32_t len)
 /**
  * @see flash.h
  */
-status_e flash_erase(uint32_t address, flash_erase_e type)
+status_e flash_erase(flash_instance_t *instance, uint32_t sector, flash_erase_e type)
 {
-    LOG_DEBUG("Flash erase: address=%d, type=%d", address, type);
-
     if (_control.is_busy)
     {
         return STATUS_ERROR_INVALID_STATE;
     }
+
+    if (sector >= instance->len)
+    {
+        return STATUS_ERROR_INVALID_PARAM;
+    }
+
+    uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
+
+    LOG_INFO("Flash erase: address=%d, type=%d", address, type);
 
     nrf_qspi_erase_len_t erase_len = 0u;
     switch (type)
@@ -192,6 +227,8 @@ status_e flash_erase(uint32_t address, flash_erase_e type)
 
     _control.next_event = FLASH_EVENT_ERASE_DONE;
     _control.is_busy = true;
+    _control.callback = instance->event_callback;
+    _control.context = instance;
 
     uint32_t err_code = nrf_drv_qspi_erase(erase_len, address);
     if (err_code != NRF_SUCCESS)
@@ -208,17 +245,6 @@ status_e flash_erase(uint32_t address, flash_erase_e type)
 status_e flash_is_busy(bool *is_busy)
 {
     *is_busy = _control.is_busy;
-
-    return STATUS_OK;
-}
-
-/**
- * @see flash.h
- */
-status_e flash_register_event_handler(flash_event_callback_t callback, void *context)
-{
-    _control.callback = callback;
-    _control.context = context;
 
     return STATUS_OK;
 }

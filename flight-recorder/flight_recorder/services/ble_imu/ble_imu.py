@@ -57,6 +57,7 @@ class BleImuService:
         self.transport.on_receive(BleDataStream(event_args.value))
 
     def _transmit(self, stream: BleDataStream):
+        logger.info(f"tx: {binascii.hexlify(stream.value)}")
         self._command_characteristic.write(stream)
 
     def _on_data(self, data: Data):
@@ -97,6 +98,6 @@ class BleImuService:
             return EmptyWaitable(last_state_update.current_state, last_state_update.previous_state)
         return StateUpdateWaitable(self._state_update, state)
 
-    def save_report(self, filename: str):
+    def save_report(self, directory):
         session = BleImuSession(datetime.datetime.now(), 0, 0, self._data)
-        session.save_report(filename)
+        session.save_report(directory)

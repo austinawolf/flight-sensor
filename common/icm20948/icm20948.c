@@ -8,6 +8,7 @@
 #include "nrf_drv_gpiote.h"
 #include "logger.h"
 #include "inv_mems.h"
+#include "datastore.h"
 
 #define BIAS_SET_TO_DMP /* Set bias to DMP rather than offset registers */
 
@@ -168,6 +169,28 @@ static status_e _get_sample(icm20948_data_t *data, bool *sample_ready)
 }
 
 /**
+ * @brief 
+ */
+static void _set_calibration(icm20948_calibration_t *data)
+{
+    int dmp_bias[9] = 
+    { 
+        data->accel_bias[0],
+        data->accel_bias[1],
+        data->accel_bias[2],
+        data->gyro_bias[0],
+        data->gyro_bias[1],
+        data->gyro_bias[2],
+        0,
+        0,
+        0,
+    };
+
+    /* Update bias on DMP memory */
+    dmp_set_bias(dmp_bias);
+}
+
+/**
  * @see icm20948.h
  */
 status_e icm20948_create(void)
@@ -185,6 +208,19 @@ status_e icm20948_create(void)
     result = inv_initialize_lower_driver(SERIAL_INTERFACE_I2C, 0);
     APP_ERROR_CHECK(result);
     inv_set_slave_compass_id(0x24);
+
+    icm20948_calibration_t cal = {0};
+    status_e status = datastore_get_cal_data(&cal);
+    if (STATUS_OK != status)
+    {
+        LOG_ERROR("datastore_get_cal_data failed: %d", status);
+        return status;
+    }
+
+    _set_calibration(&cal);
+
+    LOG_INFO("Accel biases: X:%d Y:%d Z:%d", cal.accel_bias[0], cal.accel_bias[1], cal.accel_bias[2]);
+    LOG_INFO("Gyro biases: X:%d Y:%d Z:%d", cal.gyro_bias[0], cal.gyro_bias[1], cal.gyro_bias[2]);
 
     // inv_error_t err = inv_set_gyro_sf(0, 3);
     // APP_ERROR_CHECK(err);
@@ -297,39 +333,46 @@ status_e icm20948_read(icm20948_data_t *data, bool *sample_ready)
  * @see icm20948.h
  */
 status_e icm20948_calibrate(void) {
-    int self_test_result = 0;
-    int dmp_bias[9] = { 0 };
-
-    LOG_INFO("Selftest...Started");
-
+    int16_t self_test_result = 0;
+    
     /* Perform self-test */
     self_test_result = inv_mems_run_selftest();
-    LOG_INFO("Selftest...Done...Ret=%d", self_test_result);
-    LOG_INFO("Result: Compass=%s, Accel=%s, Gyro=%s", (self_test_result & 0x04) ? "PASS" : "FAIL", (self_test_result & 0x02) ? "PASS" : "FAIL", (self_test_result & 0x01) ? "PASS" : "FAIL");
-    LOG_INFO("Accel Average (LSB@FSR 2g)");
+    
+    /* Log results */
+    LOG_INFO("Compass=%s, Accel=%s, Gyro=%s", (self_test_result & 0x04) ? "PASS" : "FAIL", (self_test_result & 0x02) ? "PASS" : "FAIL", (self_test_result & 0x01) ? "PASS" : "FAIL");
+    LOG_INFO("Accel (LSB@FSR 2g)");
     LOG_INFO("\tX:%d Y:%d Z:%d\r\n", a_average[0], a_average[1], a_average[2]);
-    LOG_INFO("Gyro Average (LSB@FSR 250dps)");
+    LOG_INFO("Gyro (LSB@FSR 250dps)");
     LOG_INFO("\tX:%d Y:%d Z:%d", g_average[0], g_average[1], g_average[2]);
 
     /* Nothing to do if FAIL on gyro and accel */
     if ((self_test_result & 0x03) != 0x03)
         return STATUS_ERROR;
 
-    /* Handle bias got by self-test */
-    dmp_bias[0] = a_average[0] * (1 << 11);   // Change from LSB to format expected by DMP
-    dmp_bias[1] = a_average[1] * (1 << 11);
-    dmp_bias[2] = (a_average[2] - 16384) * (1 << 11); //remove the gravity and scale (FSR=2 in selftest)
     int scale = 2000 / 250; //self-test uses 250dps FSR, main() set the FSR to 2000dps
-    dmp_bias[3] = g_average[0] * (1 << 15) / scale;
-    dmp_bias[4] = g_average[1] * (1 << 15) / scale;
-    dmp_bias[5] = g_average[2] * (1 << 15) / scale;
 
-    LOG_INFO("Factory Cal - Accel DMP biases: \tX:%d Y:%d Z:%d", dmp_bias[0], dmp_bias[1], dmp_bias[2]);
-    LOG_INFO("Factory Cal - Gyro DMP biases:  \tX:%d Y:%d Z:%d\r\n", dmp_bias[3], dmp_bias[4], dmp_bias[5]);
-    
-    /* Update bias on DMP memory */
-    dmp_set_bias(dmp_bias);
-    LOG_INFO("\r\nSetting the DMP biases with one-axis factory calibration values...done\r\n");
+    // TODO: remove magic numbers
+    icm20948_calibration_t cal =
+    {
+        .accel_bias = {
+            a_average[0] * (1 << 11), 
+            a_average[1] * (1 << 11), 
+            (a_average[2] - 16384) * (1 << 11)
+        },
+        .gyro_bias = {
+            g_average[0] * (1 << 15) / scale, 
+            g_average[1] * (1 << 15) / scale, 
+            g_average[2] * (1 << 15) / scale
+        }
+    };
+
+    LOG_INFO("Accel biases: X:%d Y:%d Z:%d", cal.accel_bias[0], cal.accel_bias[1], cal.accel_bias[2]);
+    LOG_INFO("Gyro biases: X:%d Y:%d Z:%d", cal.gyro_bias[0], cal.gyro_bias[1], cal.gyro_bias[2]);
+
+    _set_calibration(&cal);
+
+    (void) datastore_set_cal_data(&cal);
+    (void) datastore_flush();
 
     return STATUS_OK;
 }

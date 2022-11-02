@@ -1,4 +1,3 @@
-import binascii
 import logging
 from typing import List, Callable, Any
 from blatann.services.ble_data_types import BleDataStream
@@ -37,8 +36,7 @@ class BleImuTransportLayer:
     def on_receive(self, stream):
         packet = decode_packet(stream)
         if packet.TYPE == PacketType.RESPONSE:
-            self._on_response(
-                packet)
+            self._on_response(packet)
         elif packet.TYPE == PacketType.STATE_UPDATE:
             self._on_state_update(packet)
         elif packet.TYPE == PacketType.DATA:
