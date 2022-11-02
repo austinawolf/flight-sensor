@@ -219,9 +219,6 @@ status_e icm20948_create(void)
 
     _set_calibration(&cal);
 
-    LOG_INFO("Accel biases: X:%d Y:%d Z:%d", cal.accel_bias[0], cal.accel_bias[1], cal.accel_bias[2]);
-    LOG_INFO("Gyro biases: X:%d Y:%d Z:%d", cal.gyro_bias[0], cal.gyro_bias[1], cal.gyro_bias[2]);
-
     // inv_error_t err = inv_set_gyro_sf(0, 3);
     // APP_ERROR_CHECK(err);
 

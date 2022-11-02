@@ -176,7 +176,7 @@ status_e flash_write(flash_instance_t *instance, uint32_t sector, uint32_t offse
 
     uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
 
-    LOG_INFO("Flash write: address=%d, data=%p, len=%d", address, data, len);
+    LOG_DEBUG("Flash write: address=%d, data=%p, len=%d", address, data, len);
 
     _control.next_event = FLASH_EVENT_WRITE_DONE;
     _control.is_busy = true;
@@ -209,7 +209,7 @@ status_e flash_erase(flash_instance_t *instance, uint32_t sector, flash_erase_e 
 
     uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
 
-    LOG_INFO("Flash erase: address=%d, type=%d", address, type);
+    LOG_DEBUG("Flash erase: address=%d, type=%d", address, type);
 
     nrf_qspi_erase_len_t erase_len = 0u;
     switch (type)

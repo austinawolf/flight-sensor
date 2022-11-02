@@ -11,6 +11,16 @@
 #include "status.h"
 
 /**
+ *
+ */
+#define DATASTORE_PREAMBLE  (0xDEADBEEF)
+
+/**
+ * 
+ */
+#define DATASTORE_VERSION   (1u)
+
+/**
  * @brief 
  */
 static void _flash_event_handler(flash_event_e event, void *context);
@@ -26,6 +36,7 @@ static void _set_defaults(void)
     const datastore_t defaults = 
     {
         .preamble = DATASTORE_PREAMBLE,
+        .version = DATASTORE_VERSION,
         .icm20948_calibration = 
         {
             .accel_bias = {0, 0, 0},
@@ -84,7 +95,7 @@ status_e datastore_create(void)
     } while (is_busy);
 
     // verify
-    if (_shadow_copy.preamble != DATASTORE_PREAMBLE)
+    if ((_shadow_copy.preamble != DATASTORE_PREAMBLE) || (_shadow_copy.version != DATASTORE_VERSION))
     {
         LOG_INFO("Datastore invalid, resetting to defaults");
         datastore_reset();
