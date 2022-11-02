@@ -41,6 +41,11 @@
 #define LOG_FLUSH NRF_LOG_FLUSH
 
 /**
+ * @brief Flush any buffered logs
+ */
+#define LOG_HEX_DUMP NRF_LOG_HEXDUMP_INFO
+
+/**
  * @brief Initializes the logger
  * 
  * @return STATUS_OK on success 

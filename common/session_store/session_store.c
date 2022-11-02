@@ -10,15 +10,13 @@
 #include "logger.h"
 
 
-#define SECTOR_SIZE         (4096u)         ///< Size of single sector, in bytes
-#define ONE_MB              (1024 * 1024)   ///< Representation of 1 megabyte
 #define SAMPLES_PER_SECTOR  (92)            ///< Samples per sector
 #define SECTOR_PREAMBLE     (0xBEEF)        ///< 32-bit sector preamble
 
 /**
  * Helper macro to get address from start index and sector index
  */
-#define SECTOR_INDEX_TO_ADDRESS(__start, __index)     ((__start + __index) * SECTOR_SIZE)
+#define SECTOR_INDEX_TO_ADDRESS(__start, __index)     ((__start + __index) * FLASH_SECTOR_SIZE)
 
 /**
  * Helper macro to select the other buffer
@@ -48,8 +46,7 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t start;
-    uint32_t len;
+    flash_instance_t flash;
     sector_buffer_t buffers[2];
     uint8_t current_buffer;
     volatile bool write_in_progress;
@@ -66,8 +63,7 @@ static session_store_control_t _control = {0};
  */
 static status_e _erase_sector(uint32_t sector_index)
 {
-    uint32_t address = SECTOR_INDEX_TO_ADDRESS(_control.start, sector_index);
-    status_e status = flash_erase(address, FLASH_ERASE_SECTOR);
+    status_e status = flash_erase(&_control.flash, sector_index, FLASH_ERASE_SECTOR);
     if (status != STATUS_OK)
     {
         return status;
@@ -82,9 +78,7 @@ static status_e _erase_sector(uint32_t sector_index)
  */
 static status_e _write_sector(uint32_t sector_index, uint8_t *data, uint32_t len)
 {
-    uint32_t address = SECTOR_INDEX_TO_ADDRESS(_control.start, sector_index);
-
-    status_e status = flash_write(address, data, len);
+    status_e status = flash_write(&_control.flash, sector_index, 0u, data, len);
     if (status != STATUS_OK)
     {
         LOG_ERROR("flash_write failed, err: %d", status);
@@ -109,13 +103,13 @@ static void _swap_buffers(void)
 /**
  * Reads a sample from a sector and provided offset
  */
-static status_e _read_sample(uint32_t sector_index, uint32_t sector_offset, imu_sample_t *data)
+static status_e _read_sample(uint32_t sector_index, uint32_t sample_index, imu_sample_t *data)
 {
-    uint32_t header_address = SECTOR_INDEX_TO_ADDRESS(_control.start, sector_index);
-    uint32_t sample_address = header_address + sizeof(sector_header_t) + sizeof(imu_sample_t) * sector_offset;
+    uint32_t header_offset = 0u;
+    uint32_t sample_offset = sizeof(sector_header_t) + sizeof(imu_sample_t) * sample_index;
 
     sector_header_t header = {0};
-    status_e status = flash_read(header_address, (uint8_t*) &header, sizeof(header));
+    status_e status = flash_read(&_control.flash, sector_index, header_offset, (uint8_t*) &header, sizeof(header));
     if (status != STATUS_OK)
     {
         return status;
@@ -136,12 +130,12 @@ static status_e _read_sample(uint32_t sector_index, uint32_t sector_offset, imu_
     }
 
     // check if enough data is stored in this sector
-    if (sector_offset > header.count)
+    if (sample_index > header.count)
     {
         return STATUS_ERROR_INVALID_PARAM;
     }
 
-    status = flash_read(sample_address, (uint8_t*) data, sizeof(imu_sample_t));
+    status = flash_read(&_control.flash, sector_index, sample_offset, (uint8_t*) data, sizeof(imu_sample_t));
     if (status != STATUS_OK)
     {
         return status;
@@ -192,10 +186,9 @@ static void _flash_event_handler(flash_event_e event, void *context)
  */
 status_e session_store_create(void)
 {
-    flash_register_event_handler(_flash_event_handler, NULL);
-
-    _control.start = 10;
-    _control.len = 30;
+    _control.flash.start = 1u;
+    _control.flash.len = 20;
+    _control.flash.event_callback = _flash_event_handler;
 
     return STATUS_OK;
 }
@@ -273,7 +266,7 @@ static void _write_to_buffer(sector_buffer_t *buffer, const imu_sample_t *data)
 status_e session_store_append(const imu_sample_t *data)
 {
     // check is store is full
-    if (_control.sector_index >= (_control.start + _control.len))
+    if (_control.sector_index >= _control.flash.len)
     {
         return STATUS_ERROR_FLASH_FULL;
     }
@@ -325,12 +318,6 @@ status_e session_store_read(uint32_t index, imu_sample_t *data)
 
     uint32_t sector_index = index / SAMPLES_PER_SECTOR;
     uint32_t sector_offset = index % SAMPLES_PER_SECTOR;
-
-    // check is sector index is valid
-    if (sector_index >= (_control.start + _control.len))
-    {
-        return STATUS_ERROR_INVALID_PARAM;
-    }
 
     return _read_sample(sector_index, sector_offset, data);
 }

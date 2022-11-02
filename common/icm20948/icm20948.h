@@ -32,6 +32,15 @@ typedef struct
 } icm20948_data_t;
 
 /**
+ * @brief 
+ */
+typedef struct
+{
+    int32_t accel_bias[3];
+    int32_t gyro_bias[3];
+} icm20948_calibration_t;
+
+/**
  * @brief Definitio of ICM20948 event callback
  */
 typedef void (*icm20948_event_callback_t)(void);

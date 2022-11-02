@@ -226,6 +226,8 @@ static void _on_command_value_write(ble_imu_t * p_imu, ble_gatts_evt_write_t con
     uint8_t payload_len = 0u;
     ble_imu_decode_command(packet, p_evt_write->len, &command, &payload_len);
 
+    LOG_HEX_DUMP(p_evt_write->data, p_evt_write->len);
+
     // process command
     response_payload_t response = {0};
     uint8_t response_len = 0;

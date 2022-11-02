@@ -51,7 +51,7 @@ status_e command_handler_process(command_payload_t *command, uint8_t command_len
         case COMMAND_CODE_RECORD:
             status = session_manager_start_recording(command->record.rate, 
                                                      command->record.flags,
-                                                     command->record.stream_enable,
+                                                     false,
                                                      command->record.sampling_time);
             break;  
         case COMMAND_CODE_PLAYBACK:

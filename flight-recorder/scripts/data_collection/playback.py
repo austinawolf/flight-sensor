@@ -8,14 +8,12 @@ OUTPUT_DIR = "../../recordings"
 
 
 def main():
-    report_name = input("Report Name: ")
-
     flight_sensor = FlightSensor("COM17")
     flight_sensor.connect()
     flight_sensor.playback()
     flight_sensor.wait_for_idle(timeout=60)
     flight_sensor.disconnect()
-    flight_sensor.imu_service.save_report(f"{OUTPUT_DIR}/{report_name}.xlsx")
+    flight_sensor.imu_service.save_report(OUTPUT_DIR)
 
 
 if __name__ == '__main__':

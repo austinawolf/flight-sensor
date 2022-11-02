@@ -52,7 +52,6 @@ typedef struct
         struct {
             uint8_t rate;
             uint8_t flags;
-            uint8_t stream_enable;
             uint16_t sampling_time;
         } record;
     };

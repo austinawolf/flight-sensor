@@ -1,5 +1,6 @@
 import logging
 import math
+import os.path
 from datetime import datetime
 from typing import List
 import xlsxwriter
@@ -59,13 +60,24 @@ class Quaternion:
 
 class BleImuSession:
     def __init__(self, timestamp: datetime, session_time: int, sampling_rate, samples: List[Data]):
-        self.timestamp = timestamp
+        self._timestamp = timestamp
         self.session_time = session_time
         self.sampling_rate = sampling_rate
         self.samples = samples
 
-    def save_report(self, filename):
-        workbook = xlsxwriter.Workbook(filename)
+    @property
+    def timestamp(self) -> str:
+        return self._timestamp.strftime("%m-%d-%Y_%H-%M-%S")
+
+    def save_report(self, directory, report_name=None):
+        if report_name:
+            filename = f"{report_name}_{self.timestamp}.xlsx"
+        else:
+            filename = f"session-data_{self.timestamp}.xlsx"
+
+        path = os.path.abspath(os.path.join(directory, filename))
+
+        workbook = xlsxwriter.Workbook(path)
         data_sheet = workbook.add_worksheet()
         self._write_data(data_sheet, self.samples[:-2])
 
