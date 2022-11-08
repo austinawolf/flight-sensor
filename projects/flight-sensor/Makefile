@@ -15,13 +15,13 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += $(PROJ_DIR)/main.c
-SRC_FILES += $(SOURCE_ROOT)/command_handler/command_handler.c
 SRC_FILES += $(SOURCE_ROOT)/ble_helper/ble_helper.c
 SRC_FILES += $(SOURCE_ROOT)/session_manager/session_manager.c
 SRC_FILES += $(SOURCE_ROOT)/session_manager/session_state_machine.c
+SRC_FILES += $(SOURCE_ROOT)/imu_service/imu_service.c
 SRC_FILES += $(COMMON_ROOT)/logger/logger.c
 SRC_FILES += $(COMMON_ROOT)/ble_imu/ble_imu.c
-SRC_FILES += $(COMMON_ROOT)/ble_imu/ble_imu_encoder.c
+SRC_FILES += $(COMMON_ROOT)/ble_imu/ble_imu_encode.c
 SRC_FILES += $(COMMON_ROOT)/icm20948/icm20948.c
 SRC_FILES += $(COMMON_ROOT)/imu/imu_icm20948.c
 SRC_FILES += $(COMMON_ROOT)/imu/imu_simulated.c
@@ -32,6 +32,7 @@ SRC_FILES += $(COMMON_ROOT)/state_machine/state_machine.c
 SRC_FILES += $(COMMON_ROOT)/session_store/session_store.c
 SRC_FILES += $(COMMON_ROOT)/flash/flash.c
 SRC_FILES += $(COMMON_ROOT)/datastore/datastore.c
+SRC_FILES += $(COMMON_ROOT)/encoder/encoder.c
 SRC_FILES += $(EXTERNAL_ROOT)/icm20948/common/inv_mems_drv_hook.c
 SRC_FILES += $(EXTERNAL_ROOT)/icm20948/dmp3/inv_mems_interface_mapping.c
 SRC_FILES += $(EXTERNAL_ROOT)/icm20948/driver/inv_mems_augmented_sensors.c
@@ -174,8 +175,8 @@ SRC_FILES += $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c
 # Include folders common to all targets
 INC_FOLDERS += ./config
 INC_FOLDERS += $(SOURCE_ROOT)/ble_helper
-INC_FOLDERS += $(SOURCE_ROOT)/command_handler/
 INC_FOLDERS += $(SOURCE_ROOT)/session_manager/
+INC_FOLDERS += $(SOURCE_ROOT)/imu_service/
 INC_FOLDERS += $(COMMON_ROOT)/
 INC_FOLDERS += $(COMMON_ROOT)/ble_imu
 INC_FOLDERS += $(COMMON_ROOT)/imu
@@ -188,6 +189,7 @@ INC_FOLDERS += $(COMMON_ROOT)/state_machine
 INC_FOLDERS += $(COMMON_ROOT)/flash
 INC_FOLDERS += $(COMMON_ROOT)/session_store
 INC_FOLDERS += $(COMMON_ROOT)/datastore
+INC_FOLDERS += $(COMMON_ROOT)/encoder
 INC_FOLDERS += $(EXTERNAL_ROOT)/icm20948/
 INC_FOLDERS += $(EXTERNAL_ROOT)/icm20948/common
 INC_FOLDERS += $(EXTERNAL_ROOT)/icm20948/dmp3

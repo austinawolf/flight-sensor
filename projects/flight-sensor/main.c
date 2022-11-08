@@ -14,7 +14,6 @@
 #include "ble_helper.h"
 #include "bsp_btn_ble.h"
 #include "app_timer.h"
-#include "command_handler.h"
 #include "app_scheduler.h"
 #include "twi.h"
 #include "session_store.h"

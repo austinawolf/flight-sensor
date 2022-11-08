@@ -87,10 +87,10 @@ static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
 
     if (_control.stream_enabled)
     {
-        status = ble_helper_sample_send(&sample);
+        status = ble_helper_send_sample(&sample);
         if (status != STATUS_OK)
         {
-            LOG_ERROR("ble_helper_sample_send failed, err: %d", status);
+            LOG_ERROR("ble_helper_send_sample failed, err: %d", status);
         }
     }
 
@@ -151,14 +151,14 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
             return;
         }
 
-        status = ble_helper_sample_send(&sample);
+        status = ble_helper_send_sample(&sample);
         if (status == STATUS_ERROR_BUFFER_FULL)
         {
             buffer_full = true;
         }
         else if(status != STATUS_OK)
         {
-            LOG_ERROR("ble_helper_sample_send failed: %d", status);
+            LOG_ERROR("ble_helper_send_sample failed: %d", status);
             return;
         }
         else

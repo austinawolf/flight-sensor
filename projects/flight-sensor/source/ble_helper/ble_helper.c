@@ -34,6 +34,7 @@
 #include "ble_conn_state.h"
 #include "nrf_pwr_mgmt.h"
 #include "logger.h"
+#include "imu_service.h"
 
 
 #define DEVICE_NAME                         "Flight Sensor"                         /**< Name of device. Will be included in the advertising data. */
@@ -80,11 +81,25 @@ static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;
 static uint8_t _event_handler_count = 0u;
 static ble_helper_event_handler_t _event_handlers[MAX_EVENT_HANDLERS] = {0};
 
+/**< Function Forward Declarations */
+void _register_on_command(imu_service_t *service, on_command_callback_t callback);
+status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
+status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
+
 /**< Universally unique service identifiers. */
 static ble_uuid_t m_adv_uuids[] =                                   
 {
     {BLE_UUID_IMU_SERVICE,           BLE_UUID_TYPE_BLE},
 };
+
+/**< IMU Service Instance */
+static imu_service_t _imu_service = 
+{
+    .send_response = _send_response,
+    .send_update = _send_update,
+    .on_command = _register_on_command,
+};
+
 
 /**
  * @brief Helper function to execute all registered event handlers
@@ -505,11 +520,26 @@ static void _advertising_init(void)
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
+void _register_on_command(imu_service_t *service, on_command_callback_t callback)
+{
+    ble_imu_on_command(&m_imu, callback, (void*) service);
+}
+
+status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry)
+{
+    return ble_imu_send_update(&m_imu, payload, len, retry);
+}
+
+status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry)
+{
+    return ble_imu_send_response(&m_imu, payload, len, retry);
+}
+
 /**
  * @see ble_helper.h
  */
 status_e ble_helper_create(void)
-{
+{ 
     // Initialize.
     _ble_stack_init();
     _gap_params_init();
@@ -518,6 +548,7 @@ status_e ble_helper_create(void)
     _advertising_init();
     _conn_params_init();
     _peer_manager_init();
+    imu_service_initialize(&_imu_service);
  
     return STATUS_OK;
 }
@@ -559,15 +590,15 @@ void ble_helper_advertising_start(bool erase_bonds)
 /**
  * @see ble_helper.h
  */
-status_e ble_helper_sample_send(imu_sample_t *sample)
+status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
 {
-    return ble_imu_sample_send(&m_imu, sample);
+    return imu_service_send_state_update(&_imu_service, current, previous);
 }
 
 /**
  * @see ble_helper.h
  */
-status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
+status_e ble_helper_send_sample(imu_sample_t *sample)
 {
-    return ble_imu_send_state_update(&m_imu, current, previous);
+    return imu_service_send_sample(&_imu_service, sample);
 }
