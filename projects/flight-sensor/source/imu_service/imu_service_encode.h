@@ -18,6 +18,6 @@
  */
 status_e imu_service_command_decode(uint8_t *payload, uint8_t len, command_t *command);
 
-status_e imu_service_response_encode(const response_t *response, uint8_t *payload, uint8_t len);
+status_e imu_service_response_encode(const response_t *response, uint8_t *payload, uint8_t *len);
 
 #endif

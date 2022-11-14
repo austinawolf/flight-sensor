@@ -19,6 +19,7 @@ SRC_FILES += $(SOURCE_ROOT)/ble_helper/ble_helper.c
 SRC_FILES += $(SOURCE_ROOT)/session_manager/session_manager.c
 SRC_FILES += $(SOURCE_ROOT)/session_manager/session_state_machine.c
 SRC_FILES += $(SOURCE_ROOT)/imu_service/imu_service.c
+SRC_FILES += $(SOURCE_ROOT)/imu_service/imu_service_encode.c
 SRC_FILES += $(COMMON_ROOT)/logger/logger.c
 SRC_FILES += $(COMMON_ROOT)/ble_imu/ble_imu.c
 SRC_FILES += $(COMMON_ROOT)/ble_imu/ble_imu_encode.c

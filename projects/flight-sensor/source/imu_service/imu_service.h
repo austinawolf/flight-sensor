@@ -4,8 +4,8 @@
  * @brief
  */
 
-#ifndef COMMAND_H_
-#define COMMAND_H_
+#ifndef IMU_SERVICE_H_
+#define IMU_SERVICE_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -53,6 +53,7 @@ typedef struct
             uint8_t flags;
             uint16_t sampling_time;
         } record;
+        uint8_t *args;
     };
     uint8_t len;
 } command_t;

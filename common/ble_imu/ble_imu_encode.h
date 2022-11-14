@@ -17,6 +17,11 @@
 #define MAX_MESSAGE_LEN     (50u)
 
 /**
+ * @brief 
+ */
+#define MAX_PAYLOAD_LEN     (47u)
+
+/**
  * @brief
  */
 typedef enum
@@ -33,7 +38,7 @@ typedef enum
 typedef struct 
 {
     ble_imu_message_e type;
-    uint8_t *payload;
+    uint8_t payload[MAX_PAYLOAD_LEN];
     uint8_t len;
 } ble_imu_message_t;
 
