@@ -196,9 +196,10 @@ status_e ble_imu_send_update(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, b
     ble_imu_message_t message =
     {
         .type = BLE_IMU_MESSAGE_UPDATE,
-        .payload = payload,
+        .payload = {0},
         .len = len
     };
+    memcpy(message.payload, payload, len);
 
     uint8_t buffer[MAX_MESSAGE_LEN] = {0};
     uint8_t buffer_len = 0;
@@ -223,9 +224,10 @@ status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len,
     ble_imu_message_t message =
     {
         .type = BLE_IMU_MESSAGE_RESPONSE,
-        .payload = payload,
+        .payload = {0},
         .len = len
     };
+    memcpy(message.payload, payload, len);
 
     uint8_t buffer[MAX_MESSAGE_LEN] = {0};
     uint8_t buffer_len = 0;

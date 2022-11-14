@@ -14,6 +14,27 @@
 
 #define MAX_DATA_LEN    (50u)
 
+/**
+ * @brief Type encoders
+ */
+#define ENCODER_ENCODE_UINT8(__encoder__, __data__)     (encoder_encode_bytes(__encoder__, __data__, sizeof(uint8_t)))
+#define ENCODER_ENCODE_UINT16(__encoder__, __data__)    (encoder_encode_bytes(__encoder__, (uint8_t*) __data__, sizeof(uint16_t)))
+#define ENCODER_ENCODE_UINT32(__encoder__, __data__)    (encoder_encode_bytes(__encoder__, (uint8_t*) __data__, sizeof(uint32_t)))
+#define ENCODER_ENCODE_INT8(__encoder__, __data__)      (encoder_encode_bytes(__encoder__, (uint8_t*) __data__, sizeof(int8_t)))
+#define ENCODER_ENCODE_INT16(__encoder__, __data__)     (encoder_encode_bytes(__encoder__, (uint8_t*) __data__, sizeof(int16_t)))
+#define ENCODER_ENCODE_INT32(__encoder__, __data__)     (encoder_encode_bytes(__encoder__, (uint8_t*) __data__, sizeof(int32_t)))
+
+/**
+ * @brief Type decoders
+ */
+#define ENCODER_DECODE_UINT8(__decoder__, __data__)     (encoder_decode_bytes(__decoder__, __data__, sizeof(uint8_t)))
+#define ENCODER_DECODE_UINT16(__decoder__, __data__)    (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(uint16_t)))
+#define ENCODER_DECODE_UINT32(__decoder__, __data__)    (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(uint32_t)))
+#define ENCODER_DECODE_INT8(__decoder__, __data__)      (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(int8_t)))
+#define ENCODER_DECODE_INT16(__decoder__, __data__)     (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(int16_t)))
+#define ENCODER_DECODE_INT32(__decoder__, __data__)     (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(int32_t)))
+
+
 
 typedef struct
 {
@@ -31,35 +52,31 @@ typedef struct
     bool overflow;
 } decoder_t;
 
+/**
+ * @brief 
+ * 
+ * @param encoder 
+ * @param data 
+ * @param len 
+ */
+void encoder_encode_bytes(encoder_t *encoder, const uint8_t *data, uint8_t len);
 
-void encoder_encode_uint8(encoder_t *encoder, uint8_t data);
-
-void encoder_encode_uint16(encoder_t *encoder, uint16_t data);
-
-void encoder_encode_uint32(encoder_t *encoder, uint32_t data);
-
-void encoder_encode_int8(encoder_t *encoder, int8_t data);
-
-void encoder_encode_int16(encoder_t *encoder, int16_t data);
-
-void encoder_encode_int32(encoder_t *encoder, int32_t data);
-
-void encoder_encode_bytes(encoder_t *encoder, uint8_t *data, uint8_t len);
-
-void encoder_decode_uint8(decoder_t *decoder, uint8_t *data);
-
-void encoder_decode_uint16(decoder_t *decoder, uint16_t *data);
-
-void encoder_decode_uint32(decoder_t *decoder, uint32_t *data);
-
-void encoder_decode_int8(decoder_t *decoder, int8_t *data);
-
-void encoder_decode_int16(decoder_t *decoder, int16_t *data);
-
-void encoder_decode_int32(decoder_t *decoder, int32_t *data);
-
+/**
+ * @brief 
+ * 
+ * @param decoder 
+ * @param data 
+ * @param len 
+ */
 void encoder_decode_bytes(decoder_t *decoder, uint8_t *data, uint8_t len);
 
+/**
+ * @brief
+ * 
+ * @param decoder 
+ * @param data 
+ * @param len 
+ */
 void encoder_decode_remaining(decoder_t *decoder, uint8_t *data, uint8_t *len);
 
 #endif

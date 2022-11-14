@@ -36,6 +36,15 @@ typedef enum
 } command_e;
 
 /**
+ * @brief Possible command opcodes
+ */
+typedef enum
+{
+    UPDATE_STATE_UPDATE,
+    UPDATE_SAMPLE,
+} update_e;
+
+/**
  * @brief
  */
 typedef struct
@@ -74,6 +83,7 @@ typedef struct
     uint8_t len;
 } response_t;
 
+
 /**
  * @brief
  */
@@ -100,7 +110,7 @@ status_e imu_service_initialize(imu_service_t *service);
  * @param sample 
  * @return status_e 
  */
-status_e imu_service_send_sample(imu_service_t *service, void *sample);
+status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample);
 
 /**
  * @brief
