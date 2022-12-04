@@ -1,9 +1,8 @@
 from enum import Enum
-
 from blatann.services import ble_data_types
 from blatann.services.ble_data_types import BleDataStream
 
-from flight_recorder.packets import Packet, PacketType
+from flight_recorder.services.imu.types import Packet, PacketType
 
 
 class SessionStates(Enum):

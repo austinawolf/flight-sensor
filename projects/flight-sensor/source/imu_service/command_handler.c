@@ -14,6 +14,8 @@
  */
 status_e command_handler_process(command_t *command, response_t *response)
 {
+    response->type = command->type;
+
     switch (command->type)
     {
         case COMMAND_GET_STATUS:

@@ -92,6 +92,8 @@ status_e imu_service_sample_encode(imu_sample_t *sample, uint8_t *payload, uint8
     encoder_encode_bytes(&encoder, (uint8_t*) sample->compass, sizeof(sample->compass));
     encoder_encode_bytes(&encoder, (uint8_t*) sample->quat, sizeof(sample->quat));
 
+    *len = encoder.index;
+
     return (encoder.overflow) ? STATUS_ERROR_INVALID_LENGTH : STATUS_OK;
 }
 
@@ -114,6 +116,7 @@ status_e imu_service_state_update_encode(uint8_t current, uint8_t previous, uint
     ENCODER_ENCODE_UINT8(&encoder, &current);
     ENCODER_ENCODE_UINT8(&encoder, &previous);
 
-    return (encoder.overflow) ? STATUS_ERROR_INVALID_LENGTH : STATUS_OK;
+    *len = encoder.index;
 
+    return (encoder.overflow) ? STATUS_ERROR_INVALID_LENGTH : STATUS_OK;
 }

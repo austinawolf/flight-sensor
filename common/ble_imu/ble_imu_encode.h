@@ -38,6 +38,7 @@ typedef enum
 typedef struct 
 {
     ble_imu_message_e type;
+    uint8_t sequence;
     uint8_t payload[MAX_PAYLOAD_LEN];
     uint8_t len;
 } ble_imu_message_t;

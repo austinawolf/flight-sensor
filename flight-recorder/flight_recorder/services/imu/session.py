@@ -6,7 +6,7 @@ from typing import List
 import xlsxwriter
 from xlsxwriter.worksheet import Worksheet
 
-from flight_recorder.packets.data import Data
+from flight_recorder.types.data import Data
 
 logger = logging.getLogger(__name__)
 

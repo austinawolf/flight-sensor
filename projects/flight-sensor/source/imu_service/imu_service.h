@@ -20,7 +20,7 @@ typedef struct imu_service_s imu_service_t;
 /**
  * @brief 
  */
-typedef void (*on_command_callback_t)(uint8_t *payload, uint8_t len, void *context);
+typedef void (*on_command_callback_t)(uint8_t *payload, uint8_t len, uint8_t sequence, void *context);
 
 /**
  * @brief Possible command opcodes
@@ -50,7 +50,6 @@ typedef enum
 typedef struct
 {
     command_e type;
-    uint8_t command_token;
     union {
         struct {
             uint8_t rate;
@@ -89,7 +88,7 @@ typedef struct
  */
 struct imu_service_s
 {
-    status_e (*send_response)(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
+    status_e (*send_response)(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
     status_e (*send_update)(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
     void (*on_command)(imu_service_t *service, on_command_callback_t callback);
 };

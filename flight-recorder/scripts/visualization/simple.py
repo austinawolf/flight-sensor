@@ -2,7 +2,7 @@ import math
 import time
 
 from flight_analysis.factory.animator_factory import AnimatorConfig, AnimatorFactory
-from flight_recorder.services.ble_imu.session import Quaternion
+from flight_recorder.services.imu.session import Quaternion
 
 
 def main():

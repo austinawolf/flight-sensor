@@ -28,6 +28,8 @@ static status_e _send_message(ble_imu_t * p_imu, uint8_t *buffer, uint8_t len)
         .p_data = (uint8_t *) buffer,
     };
 
+    LOG_HEX_DUMP(buffer, len);
+
     ret_code_t err_code = sd_ble_gatts_hvx(p_imu->conn_handle, &hvx_params);
     if ((err_code == NRF_SUCCESS) && (hvx_len != len))
     {
@@ -98,7 +100,7 @@ static void _on_write(ble_imu_t * p_imu, ble_evt_t const * p_ble_evt)
         switch (message.type)
         {
             case BLE_IMU_MESSAGE_COMMAND:
-                p_imu->on_command(message.payload, message.len, p_imu->on_command_context);
+                p_imu->on_command(message.payload, message.len, message.sequence, p_imu->on_command_context);
                 break;
             default:
                 LOG_WARNING("Unexpected command: %d", message.type);
@@ -148,7 +150,7 @@ status_e ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
         return STATUS_ERROR_INTERNAL;
     }
 
-    // Add heart rate measurement characteristic
+    // Add Communication Characteristic
     memset(&add_char_params, 0, sizeof(add_char_params));
 
     add_char_params.uuid              = BLE_UUID_COMMAND_CHAR;
@@ -162,22 +164,6 @@ status_e ble_imu_init(ble_imu_t * p_imu, const ble_imu_init_t * p_imu_init)
     add_char_params.cccd_write_access = SEC_OPEN;
 
     err_code = characteristic_add(p_imu->service_handle, &add_char_params, &(p_imu->command_handles));
-    if (err_code != NRF_SUCCESS)
-    {
-        return STATUS_ERROR_INTERNAL;
-    }
-
-    // Add heart rate measurement characteristic
-    memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid              = BLE_UUID_DATA_CHAR;
-    add_char_params.max_len           = MAX_MESSAGE_LEN;
-    add_char_params.init_len          = 0;
-    add_char_params.p_init_value      = NULL;
-    add_char_params.is_var_len        = false;
-    add_char_params.char_props.notify = 1;
-    add_char_params.cccd_write_access = SEC_OPEN;
-
-    err_code = characteristic_add(p_imu->service_handle, &add_char_params, &(p_imu->data_handles));
     if (err_code != NRF_SUCCESS)
     {
         return STATUS_ERROR_INTERNAL;
@@ -217,13 +203,14 @@ status_e ble_imu_send_update(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, b
 /**
  * @see ble_imu.h
  */
-status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, bool retry)
+status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry)
 {
     status_e status = STATUS_OK;
 
     ble_imu_message_t message =
     {
         .type = BLE_IMU_MESSAGE_RESPONSE,
+        .sequence = sequence,
         .payload = {0},
         .len = len
     };

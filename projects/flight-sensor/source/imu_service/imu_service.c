@@ -12,7 +12,7 @@
 /**
  * @see imu_service.h
  */
-static void _on_command(uint8_t *payload, uint8_t len, void *context)
+static void _on_command(uint8_t *payload, uint8_t len, uint8_t sequence, void *context)
 {
     status_e status = STATUS_OK;
     imu_service_t *service = context;
@@ -20,11 +20,13 @@ static void _on_command(uint8_t *payload, uint8_t len, void *context)
     // decode command
     command_t command = {0};
     status = imu_service_command_decode(payload, len, &command);
-    if (status == STATUS_OK)
+    if (status != STATUS_OK)
     {
         LOG_WARNING("imu_service_command_decode failed, err: %d", status);
         return;
     }
+
+    LOG_INFO("Command: type=%d, sequence=%d", command.type, sequence);
 
     // call command handler
     response_t response = {0};
@@ -41,7 +43,7 @@ static void _on_command(uint8_t *payload, uint8_t len, void *context)
     }
 
     // send response
-    status = service->send_response(service, response_payload, response_len, true);
+    status = service->send_response(service, response_payload, response_len, sequence, true);
     if (status != STATUS_OK)
     {
         LOG_ERROR("service->send_response failed: %d", status);

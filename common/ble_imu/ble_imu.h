@@ -68,7 +68,7 @@ typedef struct
 /**
  * @brief
  */
-typedef void (*ble_imu_command_callback_t)(uint8_t *payload, uint8_t len, void *context);
+typedef void (*ble_imu_command_callback_t)(uint8_t *payload, uint8_t len, uint8_t sequence, void *context);
 
 /**
  * @brief Definition of BLE IMU control structure
@@ -113,7 +113,7 @@ status_e ble_imu_send_update(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, b
  * @param previous previous session manaer state
  * @return status_e STATUS_OK if success, otherwise see #status_e
  */
-status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, bool retry);
+status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
 
 /**
  * @brief

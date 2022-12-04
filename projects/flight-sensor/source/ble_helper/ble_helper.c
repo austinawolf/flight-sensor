@@ -84,7 +84,7 @@ static ble_helper_event_handler_t _event_handlers[MAX_EVENT_HANDLERS] = {0};
 /**< Function Forward Declarations */
 void _register_on_command(imu_service_t *service, on_command_callback_t callback);
 status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
-status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
+status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
 
 /**< Universally unique service identifiers. */
 static ble_uuid_t m_adv_uuids[] =                                   
@@ -530,9 +530,9 @@ status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, boo
     return ble_imu_send_update(&m_imu, payload, len, retry);
 }
 
-status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry)
+status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry)
 {
-    return ble_imu_send_response(&m_imu, payload, len, retry);
+    return ble_imu_send_response(&m_imu, payload, len, sequence, retry);
 }
 
 /**

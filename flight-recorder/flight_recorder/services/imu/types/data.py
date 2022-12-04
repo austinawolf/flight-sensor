@@ -1,10 +1,10 @@
 from enum import Enum
 from blatann.services import ble_data_types
 from blatann.services.ble_data_types import BleDataStream
-from flight_recorder.packets import Packet, PacketType
+from flight_recorder.types import Packet, PacketType
 
 
-class Data(Packet):
+class  Data(Packet):
     TYPE = PacketType.DATA
 
     @classmethod

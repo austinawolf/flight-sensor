@@ -3,11 +3,11 @@ import logging
 
 from blatann.services import ble_data_types
 from blatann.services.ble_data_types import BleDataStream
-from flight_recorder.packets import Packet, PacketType
-from flight_recorder.packets.commands import Command
-from flight_recorder.packets.responses import Response
-from flight_recorder.packets.data import Data
-from flight_recorder.packets.state_update import StateUpdate
+from flight_recorder.types import Packet, PacketType
+from flight_recorder.types.commands import Command
+from flight_recorder.types.responses import Response
+from flight_recorder.types.data import Data
+from flight_recorder.types.state_update import StateUpdate
 
 
 logger = logging.getLogger(__name__)
