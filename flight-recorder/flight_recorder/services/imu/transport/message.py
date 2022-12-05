@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class MessageType(Enum):
-    COMMAND = 0
-    RESPONSE = 1
-    UPDATE = 2
+    COMMAND = 1
+    RESPONSE = 2
+    UPDATE = 3
 
 
 class Message:

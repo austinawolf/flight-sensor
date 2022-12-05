@@ -8,7 +8,7 @@ from flight_recorder.services.imu.imu_service_encoder import decode_response, en
 from flight_recorder.services.imu.transport import ResponseWaitable, TransportLayerBase
 from flight_recorder.services.imu.types import SessionState
 from flight_recorder.services.imu.types.command import Command
-from flight_recorder.services.imu.types.response import Response
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,10 @@ class StateUpdateWaitable(Waitable):
             self._notify(new_state)
 
 
+class ImuServiceException(Exception):
+    pass
+
+
 class BleImuService:
     DEVICE_NAME = "Flight Sensor"
 
@@ -34,9 +38,6 @@ class BleImuService:
         DATA_CHARACTERISTIC = Uuid16("2aff")  # Uuid128("43192aff-8264-41bb-b660-678c8ec91201")
 
     def __init__(self, transport: TransportLayerBase):
-        """
-        :type gattc_service: blatann.gatt.gattc.GattcService
-        """
         self._transport = transport
         self._transport.on_update.subscribe(self._on_notification)
 
@@ -82,7 +83,7 @@ class BleImuService:
         response = self._send(command).wait(5)
 
         if response.status != 0:
-            raise Exception
+            raise ImuServiceException(f"Received error status {response.status}")
 
         self._expect_state(SessionState.STREAMING).wait(5)
 
@@ -91,7 +92,7 @@ class BleImuService:
         response = self._send(command).wait(5)
 
         if response.status != 0:
-            raise Exception
+            raise ImuServiceException(f"Received error status {response.status}")
 
         self._expect_state(SessionState.RECORDING).wait(5)
 
@@ -100,7 +101,7 @@ class BleImuService:
         response = self._send(command).wait(5)
 
         if response.status != 0:
-            raise Exception
+            raise ImuServiceException(f"Received error status {response.status}")
 
         self._expect_state(SessionState.PLAYBACK).wait(5)
 
@@ -109,7 +110,7 @@ class BleImuService:
         response = self._send(command).wait(5)
 
         if response.status != 0:
-            raise Exception
+            raise ImuServiceException(f"Received error status {response.status}")
 
         self._expect_state(SessionState.IDLE).wait(5)
 
@@ -118,7 +119,7 @@ class BleImuService:
         response = self._send(command).wait(5)
 
         if response.status != 0:
-            raise Exception
+            raise ImuServiceException(f"Received error status {response.status}")
 
         self._expect_state(SessionState.CALIBRATING).wait(5)
 

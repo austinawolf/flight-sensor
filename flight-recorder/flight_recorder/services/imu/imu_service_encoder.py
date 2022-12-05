@@ -12,11 +12,11 @@ def encode_command(command: Command) -> bytes:
     stream = BleDataStream()
     stream.encode(ble_data_types.Uint8, command.type.value)
 
-    if command.type.value == CommandType.STREAM:
+    if command.type.value == CommandType.STREAM.value:
         stream.encode(ble_data_types.Uint8, command.rate.value)
         stream.encode(ble_data_types.Uint8, command.flags)
         stream.encode(ble_data_types.Uint16, command.sampling_time)
-    elif command.type.value == CommandType.RECORD:
+    elif command.type.value == CommandType.RECORD.value:
         stream.encode(ble_data_types.Uint8, command.rate.value)
         stream.encode(ble_data_types.Uint8, command.flags)
         stream.encode(ble_data_types.Uint16, command.sampling_time)

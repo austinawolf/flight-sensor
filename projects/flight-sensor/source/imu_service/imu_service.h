@@ -23,7 +23,7 @@ typedef void (*on_command_callback_t)(uint8_t *payload, uint8_t len, uint8_t seq
  */
 typedef enum
 {
-    COMMAND_GET_STATUS,
+    COMMAND_GET_STATUS = 0x20,
     COMMAND_STREAM,
     COMMAND_RECORD,
     COMMAND_PLAYBACK,
@@ -36,7 +36,7 @@ typedef enum
  */
 typedef enum
 {
-    UPDATE_STATE_UPDATE,
+    UPDATE_STATE_UPDATE = 1,
     UPDATE_SAMPLE,
 } update_e;
 
@@ -68,7 +68,6 @@ typedef struct
 typedef struct
 {
     command_e type;
-    uint8_t command_token;
     status_e status;
     union {
         struct {

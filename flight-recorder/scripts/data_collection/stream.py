@@ -5,7 +5,7 @@ from flight_recorder.flight_sensor import FlightSensor
 
 logger = example_utils.setup_logger(level="INFO")
 
-SESSION_TIME = 5
+SESSION_TIME = 10
 OUTPUT_DIR = "../../recordings"
 
 
@@ -22,7 +22,7 @@ def main():
     imu_service = flight_sensor.imu_service
     imu_service.on_sample.subscribe(on_sample)
 
-    imu_service.stream(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
+    imu_service.stream(flight_sensor.Rate.RATE_100_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
 
     try:
         if SESSION_TIME:
@@ -36,6 +36,8 @@ def main():
     imu_service.wait_for_idle()
 
     flight_sensor.disconnect()
+
+    print(f"Collected {len(samples)} samples")
 
 
 if __name__ == '__main__':

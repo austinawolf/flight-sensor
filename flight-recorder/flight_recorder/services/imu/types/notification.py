@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 
 class Notification:
     class Type(Enum):
-        STATE_UPDATE = 0
-        SAMPLE = 1
+        STATE_UPDATE = 1
+        SAMPLE = 2
 
     @classmethod
     def state_update(cls, previous, current):

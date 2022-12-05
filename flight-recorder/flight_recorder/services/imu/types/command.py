@@ -5,12 +5,12 @@ logger = logging.getLogger(__name__)
 
 
 class CommandType(Enum):
-    GET_STATUS = 0
-    STREAM = 1
-    RECORD = 2
-    PLAYBACK = 3
-    STOP = 4
-    CALIBRATE = 5
+    GET_STATUS = 0x20
+    STREAM = 0x21
+    RECORD = 0x22
+    PLAYBACK = 0x23
+    STOP = 0x24
+    CALIBRATE = 0x25
 
 
 class Command:

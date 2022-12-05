@@ -26,8 +26,6 @@ static void _on_command(uint8_t *command_payload, uint8_t command_len, uint8_t *
         return;
     }
 
-    LOG_INFO("Command: type=%d", command.type);
-
     // call command handler
     response_t response = {0};
     (void) command_handler_process(&command, &response);
