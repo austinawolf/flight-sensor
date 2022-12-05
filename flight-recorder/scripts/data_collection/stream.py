@@ -5,17 +5,24 @@ from flight_recorder.flight_sensor import FlightSensor
 
 logger = example_utils.setup_logger(level="INFO")
 
-SESSION_TIME = 0
+SESSION_TIME = 5
 OUTPUT_DIR = "../../recordings"
 
 
 def main():
+    samples = []
+
+    def on_sample(new_sample):
+        if not new_sample:
+            return
+        samples.append(new_sample)
+
     flight_sensor = FlightSensor("COM17")
     flight_sensor.connect()
     imu_service = flight_sensor.imu_service
+    imu_service.on_sample.subscribe(on_sample)
 
-    response = imu_service.stream(flight_sensor.Rate.RATE_10_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
-    logger.info(f"Status: {response.status}")
+    imu_service.stream(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
 
     try:
         if SESSION_TIME:

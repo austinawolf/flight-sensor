@@ -12,10 +12,6 @@
 #include "status.h"
 #include "session_manager.h"
 
-/**
- * @brief 
- */
-typedef struct imu_service_s imu_service_t;
 
 /**
  * @brief 
@@ -84,23 +80,12 @@ typedef struct
 
 
 /**
- * @brief
- */
-struct imu_service_s
-{
-    status_e (*send_response)(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
-    status_e (*send_update)(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
-    void (*on_command)(imu_service_t *service, on_command_callback_t callback);
-};
-
-
-/**
  * @brief 
  * 
  * @param service 
  * @return status_e 
  */
-status_e imu_service_initialize(imu_service_t *service);
+status_e imu_service_create(void);
 
 /**
  * @brief
@@ -109,7 +94,7 @@ status_e imu_service_initialize(imu_service_t *service);
  * @param sample 
  * @return status_e 
  */
-status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample);
+status_e imu_service_send_sample(imu_sample_t *sample);
 
 /**
  * @brief
@@ -119,6 +104,6 @@ status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample);
  * @param previous 
  * @return status_e 
  */
-status_e imu_service_send_state_update(imu_service_t *service, session_state_e current, session_state_e previous);
+status_e imu_service_send_state_update(session_state_e current, session_state_e previous);
 
 #endif

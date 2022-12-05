@@ -14,8 +14,6 @@
 #include "imu.h"
 
 
-#define MAX_PAYLOAD_LEN     (50u)
-
 /**
  * @brief
  */

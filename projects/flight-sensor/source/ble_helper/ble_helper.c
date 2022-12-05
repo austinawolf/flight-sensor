@@ -62,8 +62,6 @@
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 #define MAX_EVENT_HANDLERS                  (4u)                                    /**< Max number of BLE Helper event handlers that can be registered */
 
-/**< Heart rate service instance. */
-BLE_IMU_DEF(m_imu);                        
 
 /**< GATT module instance. */
 NRF_BLE_GATT_DEF(m_gatt); 
@@ -81,23 +79,10 @@ static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;
 static uint8_t _event_handler_count = 0u;
 static ble_helper_event_handler_t _event_handlers[MAX_EVENT_HANDLERS] = {0};
 
-/**< Function Forward Declarations */
-void _register_on_command(imu_service_t *service, on_command_callback_t callback);
-status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry);
-status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
-
 /**< Universally unique service identifiers. */
 static ble_uuid_t m_adv_uuids[] =                                   
 {
     {BLE_UUID_IMU_SERVICE,           BLE_UUID_TYPE_BLE},
-};
-
-/**< IMU Service Instance */
-static imu_service_t _imu_service = 
-{
-    .send_response = _send_response,
-    .send_update = _send_update,
-    .on_command = _register_on_command,
 };
 
 
@@ -236,17 +221,12 @@ static void _nrf_qwr_error_handler(uint32_t nrf_error)
 static void _services_init(void)
 {
     ret_code_t         err_code = {0};
-    ble_imu_init_t     imu_init = {0};
     ble_dis_init_t     dis_init = {0};
     nrf_ble_qwr_init_t qwr_init = {0};
 
     // Initialize Queued Write Module.
     qwr_init.error_handler = _nrf_qwr_error_handler;
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize IMU Service.
-    err_code = ble_imu_init(&m_imu, &imu_init);
     APP_ERROR_CHECK(err_code);
 
     // Initialize Device Information Service.
@@ -304,7 +284,6 @@ static void _conn_params_init(void)
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = m_imu.command_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = _on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
@@ -520,21 +499,6 @@ static void _advertising_init(void)
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
-void _register_on_command(imu_service_t *service, on_command_callback_t callback)
-{
-    ble_imu_on_command(&m_imu, callback, (void*) service);
-}
-
-status_e _send_update(imu_service_t *service, uint8_t *payload, uint8_t len, bool retry)
-{
-    return ble_imu_send_update(&m_imu, payload, len, retry);
-}
-
-status_e _send_response(imu_service_t *service, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry)
-{
-    return ble_imu_send_response(&m_imu, payload, len, sequence, retry);
-}
-
 /**
  * @see ble_helper.h
  */
@@ -548,7 +512,6 @@ status_e ble_helper_create(void)
     _advertising_init();
     _conn_params_init();
     _peer_manager_init();
-    imu_service_initialize(&_imu_service);
  
     return STATUS_OK;
 }
@@ -585,20 +548,4 @@ void ble_helper_advertising_start(bool erase_bonds)
         err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
         APP_ERROR_CHECK(err_code);
     }
-}
-
-/**
- * @see ble_helper.h
- */
-status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
-{
-    return imu_service_send_state_update(&_imu_service, current, previous);
-}
-
-/**
- * @see ble_helper.h
- */
-status_e ble_helper_send_sample(imu_sample_t *sample)
-{
-    return imu_service_send_sample(&_imu_service, sample);
 }

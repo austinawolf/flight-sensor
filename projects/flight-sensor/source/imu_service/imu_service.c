@@ -1,5 +1,5 @@
 /**
- * @file    command_handler.c
+ * @file    imu_service.c
  * @author  Austin Wolf
  * @brief
  */
@@ -7,46 +7,36 @@
 #include "imu_service_encode.h"
 #include "logger.h"
 #include "command_handler.h"
+#include "ble_imu.h"
 
 
 /**
  * @see imu_service.h
  */
-static void _on_command(uint8_t *payload, uint8_t len, uint8_t sequence, void *context)
+static void _on_command(uint8_t *command_payload, uint8_t command_len, uint8_t *response_payload, uint8_t *response_len)
 {
     status_e status = STATUS_OK;
-    imu_service_t *service = context;
 
     // decode command
     command_t command = {0};
-    status = imu_service_command_decode(payload, len, &command);
+    status = imu_service_command_decode(command_payload, command_len, &command);
     if (status != STATUS_OK)
     {
         LOG_WARNING("imu_service_command_decode failed, err: %d", status);
         return;
     }
 
-    LOG_INFO("Command: type=%d, sequence=%d", command.type, sequence);
+    LOG_INFO("Command: type=%d", command.type);
 
     // call command handler
     response_t response = {0};
     (void) command_handler_process(&command, &response);
 
     // encode response
-    uint8_t response_len = 0u;
-    uint8_t response_payload[MAX_PAYLOAD_LEN] = {0};
-    status = imu_service_response_encode(&response, response_payload, &response_len);
+    status = imu_service_response_encode(&response, response_payload, response_len);
     if (status != STATUS_OK)
     {
         LOG_ERROR("imu_service_response_encode failed: %d", status);
-        return;
-    }
-
-    // send response
-    status = service->send_response(service, response_payload, response_len, sequence, true);
-    if (status != STATUS_OK)
-    {
-        LOG_ERROR("service->send_response failed: %d", status);
         return;
     }
 }
@@ -54,9 +44,9 @@ static void _on_command(uint8_t *payload, uint8_t len, uint8_t sequence, void *c
 /**
  * @see imu_service.h
  */
-status_e imu_service_initialize(imu_service_t *service)
+status_e imu_service_create(void)
 {
-    service->on_command(service, _on_command);
+    ble_imu_on_command(_on_command, NULL);
 
     return STATUS_OK;
 }
@@ -64,7 +54,7 @@ status_e imu_service_initialize(imu_service_t *service)
 /**
  * @see imu_service.h
  */
-status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample)
+status_e imu_service_send_sample(imu_sample_t *sample)
 {
     status_e status;
 
@@ -79,10 +69,9 @@ status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample)
     }
 
     // send update
-    status = service->send_update(service, payload, len, true);
+    status = ble_imu_send_update(payload, len, false);
     if (status != STATUS_OK)
     {
-        LOG_ERROR("service->send_response failed: %d", status);
         return status;
     }
 
@@ -92,7 +81,7 @@ status_e imu_service_send_sample(imu_service_t *service, imu_sample_t *sample)
 /**
  * @see imu_service.h
  */
-status_e imu_service_send_state_update(imu_service_t *service, session_state_e current, session_state_e previous)
+status_e imu_service_send_state_update(session_state_e current, session_state_e previous)
 {
     status_e status;
     
@@ -107,10 +96,10 @@ status_e imu_service_send_state_update(imu_service_t *service, session_state_e c
     }
 
     // send update
-    status = service->send_update(service, payload, len, true);
+    status = ble_imu_send_update(payload, len, true);
     if (status != STATUS_OK)
     {
-        LOG_ERROR("service->send_response failed: %d", status);
+        LOG_ERROR("ble_imu_send_update failed: %d", status);
         return status;
     }
 

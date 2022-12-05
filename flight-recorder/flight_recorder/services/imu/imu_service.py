@@ -1,28 +1,28 @@
 import logging
+
+from blatann.waitables.waitable import EmptyWaitable
 from rx.subject import BehaviorSubject
 from blatann.uuid import Uuid128, Uuid16
 from blatann.waitables import Waitable
-from flight_recorder.services.imu.imu_service_encoder import decode_response, encode_command
+from flight_recorder.services.imu.imu_service_encoder import decode_response, encode_command, decode_notification
 from flight_recorder.services.imu.transport import ResponseWaitable, TransportLayerBase
+from flight_recorder.services.imu.types import SessionState
 from flight_recorder.services.imu.types.command import Command
 from flight_recorder.services.imu.types.response import Response
-from flight_recorder.services.imu.types.state_update import SessionStates, StateUpdate
 
 logger = logging.getLogger(__name__)
 
 
-# class StateUpdateWaitable(Waitable):
-#     def __init__(self, on_update:  BehaviorSubject, state: SessionStates):
-#         super().__init__()
-#         self.state = state
-#         self.disposable = on_update.subscribe(self._on_new_state)
-#
-#     def _on_new_state(self, state_update: StateUpdate):
-#         new_state = state_update.current_state
-#         previous_state = state_update.previous_state
-#         if self.state == new_state:
-#             self.disposable.dispose()
-#             self._notify(new_state, previous_state)
+class StateUpdateWaitable(Waitable):
+    def __init__(self, on_update: BehaviorSubject, state: SessionState):
+        super().__init__()
+        self.state = state
+        self.disposable = on_update.subscribe(self._on_new_state)
+
+    def _on_new_state(self, new_state: SessionState):
+        if self.state.value == new_state.value:
+            self.disposable.dispose()
+            self._notify(new_state)
 
 
 class BleImuService:
@@ -38,9 +38,22 @@ class BleImuService:
         :type gattc_service: blatann.gatt.gattc.GattcService
         """
         self._transport = transport
+        self._transport.on_update.subscribe(self._on_notification)
 
-        self._state_update = BehaviorSubject(StateUpdate(SessionStates.IDLE, SessionStates.IDLE))
-        self.data_stream = BehaviorSubject(None)
+        self.on_state_update = BehaviorSubject(SessionState.IDLE)
+        self.on_sample = BehaviorSubject(None)
+
+    def _on_notification(self, payload: bytes):
+        if not payload:
+            return
+
+        notification = decode_notification(payload)
+        if notification.type == notification.Type.STATE_UPDATE:
+            self.on_state_update.on_next(notification.current_state)
+        elif notification.type == notification.Type.SAMPLE:
+            self.on_sample.on_next(notification.sample)
+        else:
+            raise ValueError(notification.type)
 
     def _send(self, command):
         if self._transport is None:
@@ -58,25 +71,56 @@ class BleImuService:
 
         return waitable
 
-    def stream(self, rate, flags: int, session_time: int) -> Response:
+    def _expect_state(self, state: SessionState) -> Waitable:
+        last_state_update: SessionState = self.on_state_update.value
+        if state.value == last_state_update.value:
+            return EmptyWaitable(last_state_update.value)
+        return StateUpdateWaitable(self.on_state_update, state)
+
+    def stream(self, rate, flags: int, session_time: int):
         command = Command.stream(rate, flags, session_time)
-        return self._send(command).wait(5)
+        response = self._send(command).wait(5)
 
-    # def record(self, rate, flags: int, stream_enable: bool, session_time: int) -> Response:
-    #     return self.transport.send_command(Record(rate, flags, stream_enable, session_time)).wait(5)
-    #
-    # def playback(self) -> Response:
-    #     return self.transport.send_command(Playback()).wait(5)
-    #
-    # def stop(self) -> Response:
-    #     return self.transport.send_command(Stop()).wait(5)
-    #
-    # def calibrate(self) -> Response:
-    #     return self.transport.send_command(Calibrate()).wait(5)
-    #
-    # def on_state_update(self, state: SessionStates) -> Waitable:
-    #     last_state_update = self._state_update.value
-    #     if state == last_state_update.current_state:
-    #         return EmptyWaitable(last_state_update.current_state, last_state_update.previous_state)
-    #     return StateUpdateWaitable(self._state_update, state)
+        if response.status != 0:
+            raise Exception
 
+        self._expect_state(SessionState.STREAMING).wait(5)
+
+    def record(self, rate, flags: int, stream_enable: bool, session_time: int):
+        command = Command.record(rate, flags, session_time)
+        response = self._send(command).wait(5)
+
+        if response.status != 0:
+            raise Exception
+
+        self._expect_state(SessionState.RECORDING).wait(5)
+
+    def playback(self):
+        command = Command.playback()
+        response = self._send(command).wait(5)
+
+        if response.status != 0:
+            raise Exception
+
+        self._expect_state(SessionState.PLAYBACK).wait(5)
+
+    def stop(self):
+        command = Command.stop()
+        response = self._send(command).wait(5)
+
+        if response.status != 0:
+            raise Exception
+
+        self._expect_state(SessionState.IDLE).wait(5)
+
+    def calibrate(self):
+        command = Command.calibrate()
+        response = self._send(command).wait(5)
+
+        if response.status != 0:
+            raise Exception
+
+        self._expect_state(SessionState.CALIBRATING).wait(5)
+
+    def wait_for_idle(self, timeout=5):
+        self._expect_state(SessionState.IDLE).wait(timeout)

@@ -48,14 +48,6 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                 \
 typedef struct ble_imu_s ble_imu_t;
 
 /**
- * @brief Structure passed into the BLE IMU service on init
- */
-typedef struct
-{
-    uint8_t unused;
-} ble_imu_init_t;
-
-/**
  * @brief Structure to store packet in retry buffer 
  */
 typedef struct
@@ -68,7 +60,7 @@ typedef struct
 /**
  * @brief
  */
-typedef void (*ble_imu_command_callback_t)(uint8_t *payload, uint8_t len, uint8_t sequence, void *context);
+typedef void (*ble_imu_command_callback_t)(uint8_t *command_payload, uint8_t command_len, uint8_t *response_payload, uint8_t *response_len);
 
 /**
  * @brief Definition of BLE IMU control structure
@@ -94,7 +86,7 @@ struct ble_imu_s
  * @param p_imu_init 
  * @return status_e 
  */
-status_e ble_imu_init(ble_imu_t * p_imu, ble_imu_init_t const * p_imu_init);
+status_e ble_imu_create(void);
 
 /**
  * @brief Sends a single IMU sample
@@ -103,17 +95,7 @@ status_e ble_imu_init(ble_imu_t * p_imu, ble_imu_init_t const * p_imu_init);
  * @param sample pointer to IMU sample to send
  * @return status_e STATUS_OK if success, otherwise see #status_e
  */
-status_e ble_imu_send_update(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, bool retry);
-
-/**
- * @brief Sends a single session manager state update
- * 
- * @param p_imu pointer to a IMU control structure
- * @param current new session manager state
- * @param previous previous session manaer state
- * @return status_e STATUS_OK if success, otherwise see #status_e
- */
-status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len, uint8_t sequence, bool retry);
+status_e ble_imu_send_update(uint8_t *payload, uint8_t len, bool retry);
 
 /**
  * @brief
@@ -122,7 +104,7 @@ status_e ble_imu_send_response(ble_imu_t * p_imu, uint8_t *payload, uint8_t len,
  * @param context 
  * @return status_e 
  */
-void ble_imu_on_command(ble_imu_t * p_imu, ble_imu_command_callback_t callback, void *context);
+void ble_imu_on_command(ble_imu_command_callback_t callback, void *context);
 
 /**
  * @brief Called when a new BLE event is received

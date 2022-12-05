@@ -5,6 +5,7 @@
  */
 
 #include "imu_service_encode.h"
+#include "ble_imu_encode.h"
 #include "encoder.h"
 
 

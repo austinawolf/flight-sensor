@@ -1,6 +1,9 @@
 import binascii
 import logging
 from typing import List, Callable, Any
+
+from rx.subject import BehaviorSubject
+
 from flight_recorder.services.imu.transport import TransportLayerBase, ResponseWaitable
 from flight_recorder.services.imu.transport.ble_imu_encode import decode_message, encode_message
 from flight_recorder.services.imu.transport.message import Message, MessageType
@@ -19,16 +22,16 @@ class BleImuTransport(TransportLayerBase):
         self._characteristic = characteristic
         self.pending_commands: List[Message] = []
         self._sequence_number = 1
+        self._characteristic.subscribe(self._on_write)
+        self._on_notification = BehaviorSubject(None)
 
-        self._characteristic.subscribe(self._on_notification)
-
-    def _on_notification(self, char, event_args):
+    def _on_write(self, char, event_args):
         logger.info(f"RX: {binascii.hexlify(event_args.value)}")
         message = decode_message(event_args.value)
         if message.type == MessageType.RESPONSE:
             self._on_response(message)
-        elif message.type == MessageType.RESPONSE:
-            self._on_update(message)
+        elif message.type == MessageType.UPDATE:
+            self._on_notification.on_next(message.payload)
         else:
             pass
 
@@ -47,9 +50,6 @@ class BleImuTransport(TransportLayerBase):
                 self.pending_commands.remove(command)
                 command.on_response(response.payload)
                 return
-
-    def _on_update(self, message: Message):
-        pass
 
     def _add_to_pending(self, message: Message):
         self.pending_commands.append(message)
@@ -76,4 +76,4 @@ class BleImuTransport(TransportLayerBase):
 
     @property
     def on_update(self):
-        raise NotImplementedError
+        return self._on_notification
