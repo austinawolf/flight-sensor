@@ -3,7 +3,7 @@ import time
 from blatann.examples import example_utils
 from flight_recorder.flight_sensor import FlightSensor
 
-SESSION_TIME = 15
+SESSION_TIME = 10
 logger = example_utils.setup_logger(level="INFO")
 
 
@@ -13,7 +13,7 @@ def main():
 
     imu_service = flight_sensor.imu_service
 
-    imu_service.record(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, False, SESSION_TIME)
+    imu_service.record(flight_sensor.Rate.RATE_100_HZ, flight_sensor.Flags.ALL, False, SESSION_TIME)
     flight_sensor.disconnect()
 
     time.sleep(SESSION_TIME)
