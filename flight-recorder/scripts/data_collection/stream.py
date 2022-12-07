@@ -34,7 +34,7 @@ def main():
     imu_service = flight_sensor.imu_service
     imu_service.on_sample.subscribe(on_sample)
 
-    imu_service.stream(flight_sensor.Rate.RATE_10_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
+    imu_service.stream(flight_sensor.Rate.RATE_1_HZ, flight_sensor.Flags.ALL, SESSION_TIME)
 
     try:
         if SESSION_TIME:

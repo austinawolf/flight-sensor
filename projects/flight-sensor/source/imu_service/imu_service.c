@@ -18,7 +18,7 @@ static void _on_command(uint8_t *command_payload, uint8_t command_len, uint8_t *
     status_e status = STATUS_OK;
 
     // decode command
-    command_t command = {0};
+    imu_command_t command = {0};
     status = imu_service_command_decode(command_payload, command_len, &command);
     if (status != STATUS_OK)
     {
@@ -27,7 +27,7 @@ static void _on_command(uint8_t *command_payload, uint8_t command_len, uint8_t *
     }
 
     // call command handler
-    response_t response = {0};
+    imu_response_t response = {0};
     (void) command_handler_process(&command, &response);
 
     // encode response
@@ -56,18 +56,25 @@ status_e imu_service_send_sample(imu_sample_t *sample)
 {
     status_e status;
 
+    imu_notification_t notif = 
+    {
+        .type = NOTIFICATION_SAMPLE,
+        .sample.sample = {0},
+    };
+    memcpy(&notif.sample.sample, sample, sizeof(imu_sample_t));
+
     // encode update
     uint8_t len = 0u;
     uint8_t payload[MAX_PAYLOAD_LEN] = {0};
-    status = imu_service_sample_encode(sample, payload, &len);
+    status = imu_service_notification_encode(&notif, payload, &len);
     if (status != STATUS_OK)
     {
-        LOG_ERROR("imu_service_sample_encode failed: %d", status);
+        LOG_ERROR("imu_service_state_notification_encode failed: %d", status);
         return status;
     }
 
     // send update
-    status = ble_imu_send_update(payload, len, false);
+    status = ble_imu_send_notification(payload, len, false);
     if (status != STATUS_OK)
     {
         return status;
@@ -83,18 +90,28 @@ status_e imu_service_send_state_update(session_state_e current, session_state_e 
 {
     status_e status;
     
+    imu_notification_t notif = 
+    {
+        .type = NOTIFICATION_STATE_UPDATE,
+        .state_update = 
+        {
+            .current = current,
+            .previous = previous,
+        },
+    };
+
     // encode update
     uint8_t len = 0u;
     uint8_t payload[MAX_PAYLOAD_LEN] = {0};
-    status = imu_service_state_update_encode(current, previous, payload, &len);
+    status = imu_service_notification_encode(&notif, payload, &len);
     if (status != STATUS_OK)
     {
-        LOG_ERROR("imu_service_state_update_encode failed: %d", status);
+        LOG_ERROR("imu_service_state_notification_encode failed: %d", status);
         return status;
     }
 
     // send update
-    status = ble_imu_send_update(payload, len, true);
+    status = ble_imu_send_notification(payload, len, true); 
     if (status != STATUS_OK)
     {
         LOG_ERROR("ble_imu_send_update failed: %d", status);

@@ -12,7 +12,7 @@
 /**
  * @see command_handler.h
  */
-status_e command_handler_process(command_t *command, response_t *response)
+status_e command_handler_process(imu_command_t *command, imu_response_t *response)
 {
     response->type = command->type;
 

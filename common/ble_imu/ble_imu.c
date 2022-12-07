@@ -225,13 +225,13 @@ status_e ble_imu_create(void)
 /**
  * @see ble_imu.h
  */
-status_e ble_imu_send_update(uint8_t *payload, uint8_t len, bool retry)
+status_e ble_imu_send_notification(uint8_t *payload, uint8_t len, bool retry)
 {
     status_e status = STATUS_OK;
 
     ble_imu_message_t message =
     {
-        .type = BLE_IMU_MESSAGE_UPDATE,
+        .type = BLE_IMU_MESSAGE_NOTIFICATION,
         .payload = {0},
         .len = len
     };

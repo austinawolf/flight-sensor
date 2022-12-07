@@ -56,7 +56,6 @@ typedef struct
     uint8_t len;
 } ble_imu_retry_t;
 
-
 /**
  * @brief
  */
@@ -95,7 +94,7 @@ status_e ble_imu_create(void);
  * @param sample pointer to IMU sample to send
  * @return status_e STATUS_OK if success, otherwise see #status_e
  */
-status_e ble_imu_send_update(uint8_t *payload, uint8_t len, bool retry);
+status_e ble_imu_send_notification(uint8_t *payload, uint8_t len, bool retry);
 
 /**
  * @brief
@@ -113,6 +112,5 @@ void ble_imu_on_command(ble_imu_command_callback_t callback, void *context);
  * @param p_context context pointer to BLE IMU control structure
  */
 void ble_imu_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
-
 
 #endif
