@@ -29,23 +29,23 @@ typedef enum
     COMMAND_PLAYBACK,
     COMMAND_STOP,
     COMMAND_CALIBRATE,
-} command_e;
+} command_type_e;
 
 /**
  * @brief Possible command opcodes
  */
 typedef enum
 {
-    UPDATE_STATE_UPDATE = 1,
-    UPDATE_SAMPLE,
-} update_e;
+    NOTIFICATION_STATE_UPDATE = 1,
+    NOTIFICATION_SAMPLE,
+} notification_type_e;
 
 /**
  * @brief
  */
 typedef struct
 {
-    command_e type;
+    command_type_e type;
     union {
         struct {
             uint8_t rate;
@@ -60,14 +60,14 @@ typedef struct
         uint8_t *args;
     };
     uint8_t len;
-} command_t;
+} imu_command_t;
 
 /**
  * @brief
  */
 typedef struct
 {
-    command_e type;
+    command_type_e type;
     status_e status;
     union {
         struct {
@@ -75,8 +75,26 @@ typedef struct
         } get_status;
     };
     uint8_t len;
-} response_t;
+} imu_response_t;
 
+/**
+ * @brief
+ */
+typedef struct
+{
+    notification_type_e type;
+    union {
+        struct {
+            uint8_t current;
+            uint8_t previous;
+        } state_update;
+        struct {
+             imu_sample_t sample;
+        } sample;
+        uint8_t *args;
+    };
+    uint8_t len;
+} imu_notification_t;
 
 /**
  * @brief 

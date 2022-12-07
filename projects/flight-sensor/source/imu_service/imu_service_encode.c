@@ -12,7 +12,7 @@
 /**
  * @see imu_service_encode.h
  */
-status_e imu_service_command_decode(uint8_t *payload, uint8_t len, command_t *command)
+status_e imu_service_command_decode(uint8_t *payload, uint8_t len, imu_command_t *command)
 {
     decoder_t decoder = 
     {
@@ -46,7 +46,7 @@ status_e imu_service_command_decode(uint8_t *payload, uint8_t len, command_t *co
 /**
  * @see imu_service_encode.h
  */
-status_e imu_service_response_encode(const response_t *response, uint8_t *payload, uint8_t *len)
+status_e imu_service_response_encode(const imu_response_t *response, uint8_t *payload, uint8_t *len)
 {
     encoder_t encoder = 
     {
@@ -73,7 +73,7 @@ status_e imu_service_response_encode(const response_t *response, uint8_t *payloa
 /**
  * @see imu_service_encode.h
  */
-status_e imu_service_sample_encode(imu_sample_t *sample, uint8_t *payload, uint8_t *len)
+status_e imu_service_notification_encode(const imu_notification_t *notification, uint8_t *payload, uint8_t *len)
 {
     encoder_t encoder = 
     {
@@ -83,39 +83,27 @@ status_e imu_service_sample_encode(imu_sample_t *sample, uint8_t *payload, uint8
         .overflow = false,
     };
 
-    uint8_t type = UPDATE_SAMPLE;
-
+    uint8_t type = notification->type;
     ENCODER_ENCODE_UINT8(&encoder, &type);
-    ENCODER_ENCODE_UINT32(&encoder, &sample->timestamp);
-    ENCODER_ENCODE_UINT8(&encoder, &sample->flags);
-    encoder_encode_bytes(&encoder, (uint8_t*) sample->accel, sizeof(sample->accel));
-    encoder_encode_bytes(&encoder, (uint8_t*) sample->gyro, sizeof(sample->gyro));
-    encoder_encode_bytes(&encoder, (uint8_t*) sample->compass, sizeof(sample->compass));
-    encoder_encode_bytes(&encoder, (uint8_t*) sample->quat, sizeof(sample->quat));
 
-    *len = encoder.index;
-
-    return (encoder.overflow) ? STATUS_ERROR_INVALID_LENGTH : STATUS_OK;
-}
-
-/**
- * @see imu_service_encode.h
- */
-status_e imu_service_state_update_encode(uint8_t current, uint8_t previous, uint8_t *payload, uint8_t *len)
-{
-    encoder_t encoder = 
+    switch (notification->type)
     {
-        .buffer = payload,
-        .len = MAX_PAYLOAD_LEN,
-        .index = 0u,
-        .overflow = false,
-    };
-
-    uint8_t type = UPDATE_STATE_UPDATE;
-
-    ENCODER_ENCODE_UINT8(&encoder, &type);
-    ENCODER_ENCODE_UINT8(&encoder, &current);
-    ENCODER_ENCODE_UINT8(&encoder, &previous);
+        case NOTIFICATION_STATE_UPDATE:
+            ENCODER_ENCODE_UINT8(&encoder, &notification->state_update.current);
+            ENCODER_ENCODE_UINT8(&encoder, &notification->state_update.previous);
+            break;
+        case NOTIFICATION_SAMPLE:
+            ENCODER_ENCODE_UINT32(&encoder, notification->sample.sample.timestamp);
+            ENCODER_ENCODE_UINT8(&encoder, &notification->sample.sample.flags);
+            encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.accel, sizeof(notification->sample.sample.accel));
+            encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.gyro, sizeof(notification->sample.sample.gyro));
+            encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.compass, sizeof(notification->sample.sample.compass));
+            encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.quat, sizeof(notification->sample.sample.quat));
+            break;
+        default:
+            return STATUS_ERROR_INVALID_PARAM;
+            break;
+    }
 
     *len = encoder.index;
 

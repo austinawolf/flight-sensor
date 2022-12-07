@@ -17,21 +17,16 @@
 /**
  * @brief
  */
-status_e imu_service_command_decode(uint8_t *payload, uint8_t len, command_t *command);
+status_e imu_service_command_decode(uint8_t *payload, uint8_t len, imu_command_t *command);
 
 /**
  * @brief
  */
-status_e imu_service_response_encode(const response_t *response, uint8_t *payload, uint8_t *len);
+status_e imu_service_response_encode(const imu_response_t *response, uint8_t *payload, uint8_t *len);
 
 /**
  * @brief
  */
-status_e imu_service_sample_encode(imu_sample_t *sample, uint8_t *payload, uint8_t *len);
-
-/**
- * @brief
- */
-status_e imu_service_state_update_encode(uint8_t current, uint8_t previous, uint8_t *payload, uint8_t *len);
+status_e imu_service_notification_encode(const imu_notification_t *notification, uint8_t *payload, uint8_t *len);
 
 #endif
