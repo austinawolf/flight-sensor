@@ -56,20 +56,19 @@ status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler);
 void ble_helper_advertising_start(bool erase_bonds);
 
 /**
- * @brief Send IMU sample to central over BLE IMU service
+ * @brief
  * 
- * @param sample sample to sent
- * @return status_e STATUS_OK if success, otherwise see #status_e
- */
-status_e ble_helper_sample_send(imu_sample_t *sample);
-
-/**
- * @brief Send session manager state update to central
- * 
- * @param current new session manager state
- * @param previous last session manager state
- * @return status_e STATUS_OK if success, otherwise see #status_e
+ * @param current 
+ * @param previous 
+ * @return status_e 
  */
 status_e ble_helper_send_state_update(session_state_e current, session_state_e previous);
+/**
+ * @brief
+ * 
+ * @param sample 
+ * @return status_e 
+ */
+status_e ble_helper_send_sample(imu_sample_t *sample);
 
 #endif

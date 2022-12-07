@@ -4,3 +4,4 @@
 
 # Flight Recorder
 flight-recorder/recordings/*
+*.json

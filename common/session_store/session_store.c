@@ -116,13 +116,12 @@ static status_e _read_sample(uint32_t sector_index, uint32_t sample_index, imu_s
     }
 
     // block until read is done
-    bool is_busy = false;
-    (void) flash_is_busy(&is_busy);
+    bool is_busy = true;
     while (is_busy)
     {
         (void) flash_is_busy(&is_busy);
     }
-    
+
     if (header.preamble != SECTOR_PREAMBLE)
     {
         LOG_ERROR("header.preamble=0x%x, header.count=0x%x", header.preamble, header.count);
@@ -142,8 +141,7 @@ static status_e _read_sample(uint32_t sector_index, uint32_t sample_index, imu_s
     }
 
     // block until read is done
-    is_busy = false;
-    (void) flash_is_busy(&is_busy);
+    is_busy = true;
     while (is_busy)
     {
         (void) flash_is_busy(&is_busy);
@@ -165,11 +163,16 @@ static void _flash_event_handler(flash_event_e event, void *context)
             {
                 break;
             }
-            status_e status = _erase_sector(_control.sector_index);
-            if (status != STATUS_OK)
+
+            if (_control.sector_index < _control.flash.len)
             {
-                LOG_ERROR("_erase_sector failed, err: %d", status);
+                status_e status = _erase_sector(_control.sector_index);
+                if (status != STATUS_OK)
+                {
+                    LOG_ERROR("_erase_sector failed, err: %d", status);
+                }
             }
+
             break;
         case FLASH_EVENT_ERASE_DONE:
             _control.erase_in_progress = false;

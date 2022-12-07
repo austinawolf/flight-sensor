@@ -18,7 +18,7 @@
 #include "status.h"
 #include "session_manager.h"
 #include "ble_imu_uuids.h"
-#include "ble_imu_types.h"
+#include "ble_imu_encode.h"
 
 
 /**
@@ -48,21 +48,19 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                 \
 typedef struct ble_imu_s ble_imu_t;
 
 /**
- * @brief Structure passed into the BLE IMU service on init
- */
-typedef struct
-{
-    uint8_t unused;
-} ble_imu_init_t;
-
-/**
  * @brief Structure to store packet in retry buffer 
  */
 typedef struct
 {
-    ble_imu_packet_t packet;
+    uint8_t buffer[MAX_MESSAGE_LEN];
     uint8_t len;
-} packet_retry_t;
+} ble_imu_retry_t;
+
+
+/**
+ * @brief
+ */
+typedef void (*ble_imu_command_callback_t)(uint8_t *command_payload, uint8_t command_len, uint8_t *response_payload, uint8_t *response_len);
 
 /**
  * @brief Definition of BLE IMU control structure
@@ -76,7 +74,9 @@ struct ble_imu_s
     uint8_t                      uuid_type;
     uint16_t                     packet_index;
     queue_t                      retry_queue;
-    packet_retry_t               retry_buffer[RETRY_QUEUE_LEN];
+    ble_imu_retry_t              retry_buffer[RETRY_QUEUE_LEN];
+    ble_imu_command_callback_t   on_command;
+    void                         *on_command_context;
 };
 
 /**
@@ -86,7 +86,7 @@ struct ble_imu_s
  * @param p_imu_init 
  * @return status_e 
  */
-status_e ble_imu_init(ble_imu_t * p_imu, ble_imu_init_t const * p_imu_init);
+status_e ble_imu_create(void);
 
 /**
  * @brief Sends a single IMU sample
@@ -95,17 +95,16 @@ status_e ble_imu_init(ble_imu_t * p_imu, ble_imu_init_t const * p_imu_init);
  * @param sample pointer to IMU sample to send
  * @return status_e STATUS_OK if success, otherwise see #status_e
  */
-status_e ble_imu_sample_send(ble_imu_t * p_imu, imu_sample_t *sample);
+status_e ble_imu_send_update(uint8_t *payload, uint8_t len, bool retry);
 
 /**
- * @brief Sends a single session manager state update
+ * @brief
  * 
- * @param p_imu pointer to a IMU control structure
- * @param current new session manager state
- * @param previous previous session manaer state
- * @return status_e STATUS_OK if success, otherwise see #status_e
+ * @param callback 
+ * @param context 
+ * @return status_e 
  */
-status_e ble_imu_send_state_update(ble_imu_t * p_imu, session_state_e current, session_state_e previous);
+void ble_imu_on_command(ble_imu_command_callback_t callback, void *context);
 
 /**
  * @brief Called when a new BLE event is received
@@ -114,5 +113,6 @@ status_e ble_imu_send_state_update(ble_imu_t * p_imu, session_state_e current, s
  * @param p_context context pointer to BLE IMU control structure
  */
 void ble_imu_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
+
 
 #endif

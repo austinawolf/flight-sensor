@@ -9,6 +9,8 @@
 #include "imu.h"
 #include "ble_helper.h"
 #include "app_scheduler.h"
+#include "imu_service.h"
+
 
 /* Definition of timeout timer */
 APP_TIMER_DEF(m_timeout_event_timer);
@@ -33,10 +35,10 @@ static void _transition_callback(const state_t *new_state, const state_t *previo
 {
     LOG_INFO("Session State Update: %s -> %s via %s", previous_state->name, new_state->name, transition->name);
 
-    status_e status = ble_helper_send_state_update(new_state->id, previous_state->id);
+    status_e status = imu_service_send_state_update(new_state->id, previous_state->id);
     if (status != STATUS_OK)
     {
-        LOG_ERROR("ble_helper_send_state_update failed, err: %d", status);
+        LOG_ERROR("imu_service_send_state_update failed, err: %d", status);
     }
 }
 
@@ -87,10 +89,10 @@ static void _imu_read_fifo_handler(void * p_event_data, uint16_t event_size)
 
     if (_control.stream_enabled)
     {
-        status = ble_helper_sample_send(&sample);
+        status = imu_service_send_sample(&sample);
         if (status != STATUS_OK)
         {
-            LOG_ERROR("ble_helper_sample_send failed, err: %d", status);
+            LOG_ERROR("ble_helper_send_sample failed, err: %d", status);
         }
     }
 
@@ -151,14 +153,14 @@ static void _transfer_samples_from_memory(void * p_event_data, uint16_t event_si
             return;
         }
 
-        status = ble_helper_sample_send(&sample);
+        status = imu_service_send_sample(&sample);
         if (status == STATUS_ERROR_BUFFER_FULL)
         {
             buffer_full = true;
         }
         else if(status != STATUS_OK)
         {
-            LOG_ERROR("ble_helper_sample_send failed: %d", status);
+            LOG_ERROR("imu_service_send_sample failed: %d", status);
             return;
         }
         else

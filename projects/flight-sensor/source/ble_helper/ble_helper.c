@@ -34,6 +34,7 @@
 #include "ble_conn_state.h"
 #include "nrf_pwr_mgmt.h"
 #include "logger.h"
+#include "imu_service.h"
 
 
 #define DEVICE_NAME                         "Flight Sensor"                         /**< Name of device. Will be included in the advertising data. */
@@ -61,8 +62,6 @@
 #define DEAD_BEEF                           0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 #define MAX_EVENT_HANDLERS                  (4u)                                    /**< Max number of BLE Helper event handlers that can be registered */
 
-/**< Heart rate service instance. */
-BLE_IMU_DEF(m_imu);                        
 
 /**< GATT module instance. */
 NRF_BLE_GATT_DEF(m_gatt); 
@@ -85,6 +84,7 @@ static ble_uuid_t m_adv_uuids[] =
 {
     {BLE_UUID_IMU_SERVICE,           BLE_UUID_TYPE_BLE},
 };
+
 
 /**
  * @brief Helper function to execute all registered event handlers
@@ -221,17 +221,12 @@ static void _nrf_qwr_error_handler(uint32_t nrf_error)
 static void _services_init(void)
 {
     ret_code_t         err_code = {0};
-    ble_imu_init_t     imu_init = {0};
     ble_dis_init_t     dis_init = {0};
     nrf_ble_qwr_init_t qwr_init = {0};
 
     // Initialize Queued Write Module.
     qwr_init.error_handler = _nrf_qwr_error_handler;
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize IMU Service.
-    err_code = ble_imu_init(&m_imu, &imu_init);
     APP_ERROR_CHECK(err_code);
 
     // Initialize Device Information Service.
@@ -289,7 +284,6 @@ static void _conn_params_init(void)
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = m_imu.command_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = _on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
@@ -509,7 +503,7 @@ static void _advertising_init(void)
  * @see ble_helper.h
  */
 status_e ble_helper_create(void)
-{
+{ 
     // Initialize.
     _ble_stack_init();
     _gap_params_init();
@@ -554,20 +548,4 @@ void ble_helper_advertising_start(bool erase_bonds)
         err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
         APP_ERROR_CHECK(err_code);
     }
-}
-
-/**
- * @see ble_helper.h
- */
-status_e ble_helper_sample_send(imu_sample_t *sample)
-{
-    return ble_imu_sample_send(&m_imu, sample);
-}
-
-/**
- * @see ble_helper.h
- */
-status_e ble_helper_send_state_update(session_state_e current, session_state_e previous)
-{
-    return ble_imu_send_state_update(&m_imu, current, previous);
 }

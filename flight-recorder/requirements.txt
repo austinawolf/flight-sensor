@@ -3,4 +3,4 @@ rx
 xlsxwriter
 vedo
 pyvista
-
+typing_utils

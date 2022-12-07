@@ -7,8 +7,10 @@ logger = example_utils.setup_logger(level="INFO")
 def main():
     flight_sensor = FlightSensor("COM17")
     flight_sensor.connect()
-    flight_sensor.calibrate()
-    flight_sensor.wait_for_idle(timeout=30)
+
+    imu_service = flight_sensor.imu_service
+    imu_service.calibrate()
+    imu_service.wait_for_idle(timeout=30)
 
     flight_sensor.disconnect()
 

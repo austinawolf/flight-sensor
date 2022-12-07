@@ -5,8 +5,8 @@ from blatann import BleDevice
 from blatann.gap.gap_types import ConnectionParameters
 from blatann.nrf import nrf_events
 
-from flight_recorder.packets.state_update import SessionStates
-from flight_recorder.services.ble_imu.ble_imu import BleImuService
+from flight_recorder.services.imu.imu_service import BleImuService
+from flight_recorder.services.imu.transport.ble_imu_transport import BleImuTransport
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,16 @@ class FlightSensor:
         self.port = port
         self.timeout = timeout
         self.ble_device = BleDevice(self.port)
-        self.imu_service = BleImuService()
         self._peer = None
+        self._imu_service = None
+
+    @property
+    def imu_service(self):
+        if not self._imu_service:
+            char = self._peer.database.find_characteristic(BleImuService.UUIDs.COMMAND_CHARACTERISTIC)
+            transport = BleImuTransport(char)
+            self._imu_service = BleImuService(transport)
+        return self._imu_service
 
     def connect(self, params: ConnectionParams = None):
         if not params:
@@ -89,48 +97,7 @@ class FlightSensor:
         _, event_args = self._peer.discover_services().wait(10, exception_on_timeout=False)
         logger.info("Service discovery complete! status: {}".format(event_args.status))
 
-        # Initializes services
-        self.imu_service.initialize(self._peer)
-
     def disconnect(self):
         logger.info("Disconnecting from peripheral")
         if self._peer:
             self._peer.disconnect().wait()
-
-    def stream(self, rate: Rate, flags: int, time: int = 0):
-        response = self.imu_service.stream(rate, flags, time)
-        if response.is_error:
-            raise Exception(f"Response error: {response.status}")
-
-        self.imu_service.on_state_update(SessionStates.STREAMING).wait(STATE_UPDATE_TIMEOUT)
-
-    def record(self, rate: Rate, flags: int, stream_enable: bool, time: int):
-        response = self.imu_service.record(rate, flags, stream_enable, time)
-        if response.is_error:
-            raise Exception(response)
-
-        self.imu_service.on_state_update(SessionStates.RECORDING).wait(STATE_UPDATE_TIMEOUT)
-
-    def playback(self):
-        response = self.imu_service.playback()
-        if response.is_error:
-            raise Exception(response)
-
-        self.imu_service.on_state_update(SessionStates.PLAYBACK).wait(STATE_UPDATE_TIMEOUT)
-
-    def stop(self):
-        response = self.imu_service.stop()
-        if response.is_error:
-            raise Exception(response)
-
-        self.imu_service.on_state_update(SessionStates.IDLE).wait(STATE_UPDATE_TIMEOUT)
-
-    def calibrate(self):
-        response = self.imu_service.calibrate()
-        if response.is_error:
-            raise Exception(response)
-
-        self.imu_service.on_state_update(SessionStates.CALIBRATING).wait(STATE_UPDATE_TIMEOUT)
-
-    def wait_for_idle(self, timeout=STATE_UPDATE_TIMEOUT):
-        self.imu_service.on_state_update(SessionStates.IDLE).wait(timeout)

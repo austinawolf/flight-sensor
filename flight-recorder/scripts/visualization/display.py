@@ -4,8 +4,8 @@ from blatann.examples import example_utils
 
 from flight_analysis.factory.animator_factory import AnimatorConfig, AnimatorFactory
 from flight_recorder.flight_sensor import FlightSensor
-from flight_recorder.packets.data import Data
-from flight_recorder.services.ble_imu.session import Quaternion
+from flight_recorder.types.data import Data
+from flight_recorder.services.imu.session import Quaternion
 
 
 logger = example_utils.setup_logger(level="INFO")

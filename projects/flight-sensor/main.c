@@ -14,12 +14,13 @@
 #include "ble_helper.h"
 #include "bsp_btn_ble.h"
 #include "app_timer.h"
-#include "command_handler.h"
 #include "app_scheduler.h"
 #include "twi.h"
 #include "session_store.h"
 #include "flash.h"
 #include "datastore.h"
+#include "ble_imu.h"
+#include "imu_service.h"
 
 
 #define MAX_APP_SCHEDULER_QUEUE_SIZE    (10u)
@@ -102,6 +103,8 @@ static void initialize(void)
  */
 int main(void)
 {
+    status_e status = STATUS_OK;
+
     // Initialize.
     logger_create();
     initialize();
@@ -109,12 +112,20 @@ int main(void)
     flash_create();
     datastore_create();
     ble_helper_create();
+
+    status = ble_imu_create();
+    APP_ERROR_CHECK(status);
+
+    status = imu_service_create();
+    APP_ERROR_CHECK(status);
+
     session_manager_create();
     twi_init();
     imu_create();
     timestamp_create();
     session_store_create();
     ble_helper_register_callback(_ble_helper_event_handler);
+
     LOG_INFO("Flight Sensor Started.");
 
     ble_helper_advertising_start(false);

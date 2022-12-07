@@ -138,7 +138,7 @@ status_e flash_read(flash_instance_t *instance, uint32_t sector, uint32_t offset
         return STATUS_ERROR_INVALID_PARAM;
     }
 
-    uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE;
+    uint32_t address = (instance->start + sector) * FLASH_SECTOR_SIZE + offset;
 
     _control.next_event = FLASH_EVENT_READ_DONE;
     _control.is_busy = true;
