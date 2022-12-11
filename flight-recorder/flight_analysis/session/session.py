@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
 from typing import List
-
+import matplotlib.pyplot as plt
+from flight_analysis.fusion import AbstractSensorFusion
 from flight_analysis.session.sample import Sample
 from flight_analysis.util.serializable import Serializable
 
@@ -29,3 +30,21 @@ class FlightSession(Serializable):
         return f"flight_{'stream' if self.is_stream else 'playback'}" \
                f"-{self.mac_addr}" \
                f"-{self.timestamp.strftime('%m_%d_%Y-%H_%M_%S')}"
+
+    def run_sensor_fusion(self, fusion: AbstractSensorFusion):
+        self.samples.sort(key=lambda s: s.timestamp)
+        for sample in self.samples:
+            sample.quat = fusion.update(sample)
+
+    def plot_euler(self, name: str, block=True):
+        timestamps = [sample.timestamp / 1000 for sample in self.samples]
+        roll = [sample.quat.roll for sample in self.samples]
+        pitch = [sample.quat.pitch for sample in self.samples]
+        yaw = [sample.quat.yaw for sample in self.samples]
+
+        plt.figure(name)
+        plt.plot(range(len(roll)), roll, label="roll")
+        plt.plot(range(len(pitch)), pitch, label="pitch")
+        plt.plot(range(len(yaw)), yaw, label="yaw")
+        plt.legend()
+        plt.show(block=block)
