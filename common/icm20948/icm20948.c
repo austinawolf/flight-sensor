@@ -219,8 +219,8 @@ status_e icm20948_create(void)
 
     _set_calibration(&cal);
 
-    // inv_error_t err = inv_set_gyro_sf(0, 3);
-    // APP_ERROR_CHECK(err);
+    inv_error_t err = inv_set_gyro_sf(0, 3);
+    APP_ERROR_CHECK(err);
 
     return STATUS_OK;
 }
@@ -346,7 +346,7 @@ status_e icm20948_calibrate(void) {
     if ((self_test_result & 0x03) != 0x03)
         return STATUS_ERROR;
 
-    int scale = 2000 / 250; //self-test uses 250dps FSR, main() set the FSR to 2000dps
+    int scale = 2000 / 250; // self-test uses 250dps FSR, main() set the FSR to 2000dps
 
     // TODO: remove magic numbers
     icm20948_calibration_t cal =

@@ -10,17 +10,27 @@ class Quaternion(Serializable):
 
     @classmethod
     def from_euler(cls, roll, pitch, yaw):
-        q0 = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.sin(pitch / 2) * math.sin(yaw / 2)
-        q1 = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(roll / 2) * math.sin(pitch / 2) * math.sin(yaw / 2)
-        q2 = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2)
-        q3 = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2)
+        q0 = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.sin(
+            pitch / 2) * math.sin(yaw / 2)
+        q1 = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(roll / 2) * math.sin(
+            pitch / 2) * math.sin(yaw / 2)
+        q2 = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(roll / 2) * math.cos(
+            pitch / 2) * math.sin(yaw / 2)
+        q3 = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(roll / 2) * math.sin(
+            pitch / 2) * math.cos(yaw / 2)
         return cls(q0, q1, q2, q3)
+
+    @classmethod
+    def from_tuple(cls, q):
+        return cls(q[0], q[1], q[2], q[3])
 
     def __init__(self, q0, q1, q2, q3):
         self.q0 = q0
         self.q1 = q1
         self.q2 = q2
         self.q3 = q3
+        if None not in self.tuple:
+            self.normalize()
 
     def normalize(self):
         magnitude = self.magnitude()

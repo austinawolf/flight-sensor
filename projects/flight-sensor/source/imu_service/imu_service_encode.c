@@ -93,7 +93,7 @@ status_e imu_service_notification_encode(const imu_notification_t *notification,
             ENCODER_ENCODE_UINT8(&encoder, &notification->state_update.previous);
             break;
         case NOTIFICATION_SAMPLE:
-            ENCODER_ENCODE_UINT32(&encoder, notification->sample.sample.timestamp);
+            ENCODER_ENCODE_UINT32(&encoder, &notification->sample.sample.timestamp);
             ENCODER_ENCODE_UINT8(&encoder, &notification->sample.sample.flags);
             encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.accel, sizeof(notification->sample.sample.accel));
             encoder_encode_bytes(&encoder, (uint8_t*) notification->sample.sample.gyro, sizeof(notification->sample.sample.gyro));

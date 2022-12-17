@@ -62,7 +62,6 @@ class PyVistaAnimator(AnimatorBase):
             x = quat[1] / math.sqrt(1 - quat[0] * quat[0])
             y = quat[2] / math.sqrt(1 - quat[0] * quat[0])
             z = quat[3] / math.sqrt(1 - quat[0] * quat[0])
-        print(f"Axis-Angle: {theta, x, y, z}")
         self.orientation = Orientation(theta, (-x, y, -z))
 
     def on_event(self, callback):
