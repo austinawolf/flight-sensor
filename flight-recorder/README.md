@@ -4,9 +4,7 @@
 
 ### Downloads
 - Python `3.9+` [here](https://www.python.org/downloads/release/python-3912/)
-- PyCharm Community Editor [here](https://www.jetbrains.com/pycharm/download/#section=windows) 
-
-<br />
+- PyCharm Community Editor [here](https://www.jetbrains.com/pycharm/download/#section=windows)
 
 ### Installs
 **Python**
@@ -16,8 +14,6 @@
 
 **PyCharm**
 - Run the installer using default options
-
-<br />
 
 ### Setup
 
@@ -30,7 +26,7 @@
         - From the Python Interpreter drop down menu, select `Show All...`
         - Click `+`
         - Select `Existing Environment`
-        - In the Interpreter drop down menu `C:\Users\<username>\.virtualenvs\flitht-recorder\scripts\python.exe` should be selected
+        - In the Interpreter drop down menu `C:\Users\<username>\.virtualenvs\flight-recorder\scripts\python.exe` should be selected
         - Click `OK` in all open windows
 
 **BLE Central**
@@ -46,14 +42,19 @@
 
 ### Data Collection
 
-**Stream**
-- In the project window, right click on `flight-recorder/stream` and select `Run "stream"`
+**Stream**: connects to the sensor and record live orientation samples to a session file.
 
-**Record**
-- In the project window, right click on `flight-recorder/record` and select `Run "record"`
+**Record**: commands the sensor to start saving orientation samples to local flash. Use playback to retrieve samples. 
 
-**Playback**
-- In the project window, right click on `flight-recorder/playback` and select `Run "playback"`
+**Playback**: streams previously recorded data
 
-**Calibrate**
-- In the project window, right click on `flight-recorder/calibrate` and select `Run "calibrate"`
+**Calibrate**: executes the calibration routine (about 15 seconds). Keep the device flat throughout the calibration.
+
+### Analysis
+
+**Sensor Fusion**: Plots euler angles of last stream/playback session
+
+### Visualization
+
+**Display**: starts a stream and displays live animation
+

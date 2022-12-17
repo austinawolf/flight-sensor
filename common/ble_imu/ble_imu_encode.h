@@ -1,7 +1,7 @@
-  /*
+/**
  * @file    ble_imu_encode.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Encodes/decodes BLE IMU command/responses
  */
 
 #ifndef BLE_IMU_MESSAGE_H_

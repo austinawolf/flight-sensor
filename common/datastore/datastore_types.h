@@ -1,7 +1,7 @@
 /**
- * @file    
+ * @file    datastore_types.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Types used by the datastore module
  */
 
 #ifndef DATASTORE_TYPES_H
@@ -14,7 +14,7 @@
 
 
 /**
- *
+ * @brief Definition of datastore contents to save/load
  */
 typedef struct
 {

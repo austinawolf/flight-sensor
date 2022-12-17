@@ -1,7 +1,7 @@
 /**
- * @file    command_handler.h
+ * @file    imu_service_encode.c
  * @author  Austin Wolf
- * @brief
+ * @brief   Encodes/decodes IMU service commands, reponses and notifications
  */
 
 #include "imu_service_encode.h"

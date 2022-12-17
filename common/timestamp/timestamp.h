@@ -1,7 +1,7 @@
 /**
  * @file    timestamp.h
  * @author  Austin Wolf
- * @brief
+ * @brief   keeps milliseconds since boot
  */
 
 #ifndef TIMESTAMP_H_

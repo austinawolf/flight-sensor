@@ -1,5 +1,10 @@
-#ifdef IMU_SIMULATED
+/**
+ * @file    imu_simulated.c
+ * @author  Austin Wolf
+ * @brief   Simulated IMU driver
+ */
 
+#ifdef IMU_SIMULATED
 
 /**
  * @file    logger.c

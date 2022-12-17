@@ -1,7 +1,7 @@
 /**
  * @file    imu_service.c
  * @author  Austin Wolf
- * @brief
+ * @brief   High level interface to process commands and send IMU samples
  */
 #include "imu_service.h"
 #include "imu_service_encode.h"
@@ -11,7 +11,7 @@
 
 
 /**
- * @see imu_service.h
+ * Callback to handle commands received by the BLE IMU service
  */
 static void _on_command(uint8_t *command_payload, uint8_t command_len, uint8_t *response_payload, uint8_t *response_len)
 {

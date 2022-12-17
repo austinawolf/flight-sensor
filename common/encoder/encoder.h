@@ -1,7 +1,7 @@
 /**
- * @file    logger.h
+ * @file    encoder.h
  * @author  Austin Wolf
- * @brief
+ * @brief   helper module to encode/decode data
  */
 
 #ifndef ENCODE_H_
@@ -11,8 +11,6 @@
 #include <stdbool.h>
 #include "status.h"
 
-
-#define MAX_DATA_LEN    (50u)
 
 /**
  * @brief Type encoders
@@ -35,7 +33,9 @@
 #define ENCODER_DECODE_INT32(__decoder__, __data__)     (encoder_decode_bytes(__decoder__, (uint8_t*) __data__, sizeof(int32_t)))
 
 
-
+/**
+ * @brief Encoder object to manage data to encode
+ */
 typedef struct
 {
     uint8_t *buffer;
@@ -44,6 +44,9 @@ typedef struct
     bool overflow;
 } encoder_t;
 
+/**
+ * @brief Decode object to manage data to decode
+ */
 typedef struct
 {
     const uint8_t *buffer;
@@ -53,29 +56,29 @@ typedef struct
 } decoder_t;
 
 /**
- * @brief 
+ * @brief Encodes bytes into buffer
  * 
- * @param encoder 
- * @param data 
- * @param len 
+ * @param encoder pointer to encoder object
+ * @param data data to encode
+ * @param len length of data to encode
  */
 void encoder_encode_bytes(encoder_t *encoder, const uint8_t *data, uint8_t len);
 
 /**
- * @brief 
+ * @brief Decodes buffer into bytes
  * 
- * @param decoder 
- * @param data 
- * @param len 
+ * @param decoder pointer to decode object
+ * @param data pointer to store decoded data
+ * @param len length of data to decode
  */
 void encoder_decode_bytes(decoder_t *decoder, uint8_t *data, uint8_t len);
 
 /**
- * @brief
+ * @brief Decodes remaining bytes in buffer
  * 
- * @param decoder 
- * @param data 
- * @param len 
+ * @param decoder pointer to decode object
+ * @param data pointer to store decoded data
+ * @param len length of data that was decoded
  */
 void encoder_decode_remaining(decoder_t *decoder, uint8_t *data, uint8_t *len);
 

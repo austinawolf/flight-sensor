@@ -1,3 +1,9 @@
+/**
+ * @file    imu.h
+ * @author  Austin Wolf
+ * @brief   Wrapper for Nordic's HAL I2C driver
+ */
+
 #ifndef TWI_H_
 #define TWI_H_
 

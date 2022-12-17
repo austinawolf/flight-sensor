@@ -1,7 +1,7 @@
 /**
  * @file    state_machine.h
  * @author  Austin Wolf
- * @brief
+ * @brief   generic state machine module
  */
 
 #ifndef STATE_MACHINE_H_

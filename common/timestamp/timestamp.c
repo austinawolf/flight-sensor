@@ -1,7 +1,7 @@
 /**
- * @file    logger.c
+ * @file    timestamp.c
  * @author  Austin Wolf
- * @brief
+ * @brief   keeps milliseconds since boot
  */
 #include "logger.h"
 #include "app_timer.h"

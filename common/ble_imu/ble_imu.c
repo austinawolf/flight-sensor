@@ -1,7 +1,7 @@
 /**
  * @file    ble_imu.c
  * @author  Austin Wolf
- * @brief
+ * @brief   BLE IMU service transport layer
  */
 
 #include "sdk_common.h"
@@ -13,7 +13,7 @@
 #include "ble_imu_encode.h"
 
 
-/**< BLE IMU Instance. */
+// BLE IMU Instance.
 BLE_IMU_DEF(_ble_imu);
 
 /**

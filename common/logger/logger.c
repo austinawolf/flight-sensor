@@ -1,8 +1,9 @@
 /**
  * @file    logger.c
  * @author  Austin Wolf
- * @brief
+ * @brief   wrapper for Nordic's logger module
  */
+
 #include "logger.h"
 
 

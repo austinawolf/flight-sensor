@@ -1,3 +1,9 @@
+/**
+ * @file    twi.c
+ * @author  Austin Wolf
+ * @brief   Wrapper for Nordic's HAL I2C driver
+ */
+
 #include "twi.h"
 #include <stdio.h>
 #include "boards.h"

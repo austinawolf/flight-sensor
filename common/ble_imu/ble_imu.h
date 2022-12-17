@@ -1,7 +1,7 @@
 /**
  * @file    ble_imu.h
  * @author  Austin Wolf
- * @brief
+ * @brief   BLE IMU service transport layer
  */
 
 #ifndef BLE_IMU_H__
@@ -26,7 +26,7 @@
  * 
  * @note Not used for IMU samples
  */
-#define RETRY_QUEUE_LEN (5)
+#define RETRY_QUEUE_LEN     (5u)
 
 /**
  * @brief Service observer priority
@@ -57,7 +57,7 @@ typedef struct
 } ble_imu_retry_t;
 
 /**
- * @brief
+ * @brief Callback to register command processor
  */
 typedef void (*ble_imu_command_callback_t)(uint8_t *command_payload, uint8_t command_len, uint8_t *response_payload, uint8_t *response_len);
 
@@ -79,29 +79,27 @@ struct ble_imu_s
 };
 
 /**
- * @brief Initialies a BLE IMU control structure
- * 
- * @param p_imu 
- * @param p_imu_init 
- * @return status_e 
+ * @brief Initialies the BLE IMU module
+ *
+ * @return status_e STATUS_OK if success, otherwise see #status_e
  */
 status_e ble_imu_create(void);
 
 /**
- * @brief Sends a single IMU sample
+ * @brief Sends a payload via notification message
  * 
- * @param p_imu pointer to a IMU control structure
- * @param sample pointer to IMU sample to send
+ * @param payload payload to send
+ * @param len length of payload to send
  * @return status_e STATUS_OK if success, otherwise see #status_e
  */
 status_e ble_imu_send_notification(uint8_t *payload, uint8_t len, bool retry);
 
 /**
- * @brief
+ * @brief Sends a command via command message
  * 
- * @param callback 
- * @param context 
- * @return status_e 
+ * @param callback pointer to callback
+ * @param context context passes to callback 
+ * @return status_e STATUS_OK if success, otherwise see #status_e
  */
 void ble_imu_on_command(ble_imu_command_callback_t callback, void *context);
 

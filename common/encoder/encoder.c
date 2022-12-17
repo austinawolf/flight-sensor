@@ -1,8 +1,9 @@
 /**
- * @file    logger.c
+ * @file    encoder.c
  * @author  Austin Wolf
- * @brief
+ * @brief   helper module to encode/decode data
  */
+
 #include <string.h>
 #include "encoder.h"
 
