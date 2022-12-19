@@ -1,7 +1,7 @@
 /**
  * @file    command_handler.h
  * @author  Austin Wolf
- * @brief
+ * @brief   High level interface to process commands and send IMU samples
  */
 
 #ifndef IMU_SERVICE_H_
@@ -12,11 +12,6 @@
 #include "status.h"
 #include "session_manager.h"
 
-
-/**
- * @brief 
- */
-typedef void (*on_command_callback_t)(uint8_t *payload, uint8_t len, uint8_t sequence, void *context);
 
 /**
  * @brief Possible command opcodes
@@ -32,7 +27,7 @@ typedef enum
 } command_type_e;
 
 /**
- * @brief Possible command opcodes
+ * @brief Possible notification types
  */
 typedef enum
 {
@@ -41,7 +36,7 @@ typedef enum
 } notification_type_e;
 
 /**
- * @brief
+ * @brief Tagged union for representing all possible IMU commands
  */
 typedef struct
 {
@@ -51,19 +46,17 @@ typedef struct
             uint8_t rate;
             uint8_t flags;
             uint16_t sampling_time;
-        } stream;
+        } stream;   // params for stream command
         struct {
             uint8_t rate;
             uint8_t flags;
             uint16_t sampling_time;
-        } record;
-        uint8_t *args;
+        } record;   // params for record command
     };
-    uint8_t len;
 } imu_command_t;
 
 /**
- * @brief
+ * @brief Tagged union for representing all possible IMU responses
  */
 typedef struct
 {
@@ -71,14 +64,13 @@ typedef struct
     status_e status;
     union {
         struct {
-            uint8_t x;
+            uint8_t x;  // TODO: Implement "get_status" command/response AW 12/17/22
         } get_status;
     };
-    uint8_t len;
 } imu_response_t;
 
 /**
- * @brief
+ * @brief Tagged union for representing all possible IMU notifications
  */
 typedef struct
 {
@@ -87,39 +79,38 @@ typedef struct
         struct {
             uint8_t current;
             uint8_t previous;
-        } state_update;
+        } state_update; // params for "state_update" notification
         struct {
              imu_sample_t sample;
-        } sample;
+        } sample;       // params for "sample" notification
         uint8_t *args;
     };
     uint8_t len;
 } imu_notification_t;
 
 /**
- * @brief 
+ * @brief Creates IMU service
  * 
- * @param service 
  * @return status_e 
  */
 status_e imu_service_create(void);
 
 /**
- * @brief
+ * @brief Sends an IMU sample
  * 
- * @param service 
- * @param sample 
- * @return status_e 
+ * @param sample pointer to IMU sample
+ *
+ * @return STATUS_OK on success
  */
 status_e imu_service_send_sample(imu_sample_t *sample);
 
 /**
- * @brief
- * 
- * @param service 
- * @param current 
- * @param previous 
- * @return status_e 
+ * @brief Sends an session state update
+ *
+ * @param current current session state
+ * @param previous previous session state
+ *
+ * @return STATUS_OK on success
  */
 status_e imu_service_send_state_update(session_state_e current, session_state_e previous);
 

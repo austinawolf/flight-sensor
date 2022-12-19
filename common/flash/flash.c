@@ -1,8 +1,9 @@
 /**
  * @file    flash.c
  * @author  Austin Wolf
- * @brief
+ * @brief   Wrapper for Nordic's QSPI HAL flash driver
  */
+
 #include "flash.h"
 #include "logger.h"
 #include "nrf_drv_qspi.h"

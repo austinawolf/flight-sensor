@@ -1,13 +1,30 @@
 # Flight Sensor Firmware/Software Repository
-
-## Overview
 - `common`: Shared common source used by multiple projects
 - `flight-recorder`:  Python tool to interface to the flight sensor firmware over BLE
 - `libs`: external dependencies used by the build
 - `nRF5_SDK`: Nordic SDK 17.3
 - `projects`: All firmware applications
     - `flash-dev`: project used by flash debugging/development
-    - `flight-sensor`: application used to record IMU data and playback saved data over BLE
+    - `flight-sensor`: main firmware application for stream and recording flight data
+
+## Project Overview
+
+This project is intended to be used as data collection and analysis platform for measuring the orientation of disc golf discs. A sensor node with a processor and an inertial measurment unit (IMU) is attached to a disc. During flight, the node records IMU data to local memory. After the disc is recovered, the flight data is retreived via Bluetooth using the `flight-recorder` python tool. After data is collected, the `flight-analysis` python tool is used to process, analyze, plot, and animate flight data. 
+
+### Sensor Node
+
+The sensor node contains the following components:
+- `Nordic nrf52840`: Bluetooth SoC build around ARM Cortex-M4 processor
+- `Invensense ICM20948`: 9-axis inertial measurement unit with on-chip Cortex-M0 digital motion processor for sensor fusion
+- `Macronix MX25R6435F`: 64 Mbit Serial NOR Flash with QSPI
+
+### Flight Recorder
+
+To communicate with the sensor node via Bluetooth, the `flight-recorder` tool uses the `blatann` python library, a high level interface for performing bluetooth operations via Nordic's `pc-ble-driver-py` and connectivity firmware running on a `PCA10056` evaluation board. The `flight-recorder` tool uses the `imu-service` command set consisting of the following operations:
+- `stream`: enables IMU and starts transmitting raw IMU data via BLE notifications
+- `record`: enables IMU and starts saving raw IMU data to flash
+- `playback`: retrieves IMU data from flash and transmits via BLE notifications
+- `calibrate`: starts calibrations of IMU
 
 
 ## Build Instructions

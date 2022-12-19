@@ -1,7 +1,7 @@
 /**
- * @file    logger.h
+ * @file    imu.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Generic API for IMU drivers
  */
 
 #ifndef IMU_H_

@@ -1,7 +1,7 @@
 /**
  * @file    flash.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Wrapper for Nordic's QSPI HAL flash driver
  */
 
 #ifndef FLASH_H_

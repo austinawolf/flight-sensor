@@ -1,9 +1,8 @@
-  /*
- * @file    ble_imu_encode.h
+/**
+ * @file    ble_imu_encode.c
  * @author  Austin Wolf
- * @brief
+ * @brief   Encodes/decodes BLE IMU command/responses
  */
-
 
 #include <stdint.h>
 #include "status.h"
@@ -13,7 +12,7 @@
 
 
 /**
- * @brief
+ * @see ble_imu_encode.h
  */
 status_e ble_imu_encode_message(const ble_imu_message_t *message, uint8_t *buffer, uint8_t *len)
 {
@@ -35,7 +34,7 @@ status_e ble_imu_encode_message(const ble_imu_message_t *message, uint8_t *buffe
 }
 
 /**
- * @brief
+ * @see ble_imu_encode.h
  */
 status_e ble_imu_decode_message(const uint8_t *buffer, uint8_t len, ble_imu_message_t *message)
 {

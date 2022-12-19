@@ -1,3 +1,9 @@
+/**
+ * @file    queue.c
+ * @author  Austin Wolf
+ * @brief   basic fixed size queue
+ */
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>

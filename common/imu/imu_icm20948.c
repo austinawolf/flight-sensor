@@ -1,8 +1,9 @@
 /**
- * @file    icm20948.c
+ * @file    imu_icm20948
  * @author  Austin Wolf
- * @brief
+ * @brief   ICM20948 IMU driver
  */
+
 #include "imu.h"
 #include "icm20948.h"
 #include "timestamp.h"

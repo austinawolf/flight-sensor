@@ -1,7 +1,7 @@
 /**
  * @file    icm20948.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Wrapper for vendor drivers 
  */
 
 #ifndef ICM_20948_H_
@@ -32,7 +32,7 @@ typedef struct
 } icm20948_data_t;
 
 /**
- * @brief 
+ * @brief Calibration data used by the icm20948
  */
 typedef struct
 {

@@ -1,3 +1,9 @@
+/**
+ * @file    queue.h
+ * @author  Austin Wolf
+ * @brief   basic fixed size queue
+ */
+
 #ifndef QUEUE_H_
 #define QUEUE_H_
 

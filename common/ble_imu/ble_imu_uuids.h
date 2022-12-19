@@ -1,7 +1,7 @@
 /**
  * @file    ble_imu_uuids.h
  * @author  Austin Wolf
- * @brief
+ * @brief   UUID constants for the BLE IMU service
  */
 
 #ifndef BLE_IMU_UUIDS_H__

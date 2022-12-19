@@ -1,8 +1,9 @@
 /**
  * @file    state_machine.c
  * @author  Austin Wolf
- * @brief
+ * @brief   generic state machine module
  */
+
 #include "state_machine.h"
 #include "status.h"
 #include "logger.h"

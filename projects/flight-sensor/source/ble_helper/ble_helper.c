@@ -1,7 +1,7 @@
 /**
- * @file    ble_helper.c
+ * @file    ble_helper.h
  * @author  Austin Wolf
- * @brief   Module to initialize BLE stack and manage BLE services
+ * @brief   helper module to manage BLE stack and generate BLE events 
  */
 
 #include <stdint.h>

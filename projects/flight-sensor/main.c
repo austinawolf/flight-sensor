@@ -1,3 +1,9 @@
+/**
+ * @file    main.c
+ * @author  Austin Wolf
+ * @brief   Application main
+ */
+
 #include <stdint.h>
 #include <string.h>
 #include "nordic_common.h"

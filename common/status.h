@@ -1,7 +1,7 @@
 /**
  * @file   status.h
  * @author Austin Wolf
- * @brief
+ * @brief  definition of status codes
  */
 
 #ifndef STATUS_H_

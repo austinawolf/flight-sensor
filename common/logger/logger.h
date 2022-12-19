@@ -1,7 +1,7 @@
 /**
  * @file    logger.h
  * @author  Austin Wolf
- * @brief
+ * @brief   wrapper for Nordic's logger module
  */
 
 #ifndef LOGGER_H_

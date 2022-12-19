@@ -1,7 +1,7 @@
 /**
  * @file    session_manager.h
  * @author  Austin Wolf
- * @brief
+ * @brief   High level control of IMU states, data collection and data flow
  */
 
 #ifndef SESSION_MANAGER_H_

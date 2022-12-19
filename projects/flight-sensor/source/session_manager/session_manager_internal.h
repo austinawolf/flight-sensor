@@ -1,7 +1,7 @@
 /**
  * @file    session_manager_internal.h
  * @author  Austin Wolf
- * @brief
+ * @brief   session state machine states and transitions
  */
 
 #ifndef SESSION_MANAGER_INTERNAL_H_

@@ -1,8 +1,7 @@
-
 /**
  * @file    ble_helper.h
  * @author  Austin Wolf
- * @brief
+ * @brief   helper module to manage BLE stack and generate BLE events 
  */
 
 #ifndef BLE_HELPER_H_
@@ -54,21 +53,5 @@ status_e ble_helper_register_callback(ble_helper_event_handler_t event_handler);
  * @param erase_bonds true to erase bonds, false otherwise
  */
 void ble_helper_advertising_start(bool erase_bonds);
-
-/**
- * @brief
- * 
- * @param current 
- * @param previous 
- * @return status_e 
- */
-status_e ble_helper_send_state_update(session_state_e current, session_state_e previous);
-/**
- * @brief
- * 
- * @param sample 
- * @return status_e 
- */
-status_e ble_helper_send_sample(imu_sample_t *sample);
 
 #endif

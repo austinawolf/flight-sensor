@@ -1,7 +1,7 @@
 /**
  * @file    command_handler.h
  * @author  Austin Wolf
- * @brief
+ * @brief   executes command callbacks and loads responses
  */
 
 #ifndef COMMAND_HANDLER_H_

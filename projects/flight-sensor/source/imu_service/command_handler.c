@@ -1,8 +1,9 @@
 /**
- * @file    command_handler.c
+ * @file    command_handler.h
  * @author  Austin Wolf
- * @brief
+ * @brief   executes command callbacks and loads responses
  */
+
 #include "command_handler.h"
 #include "logger.h"
 #include "state_machine.h"

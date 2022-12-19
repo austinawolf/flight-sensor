@@ -1,7 +1,7 @@
 /**
- * @file    session_state_machine.h
+ * @file    session_state_machine.c
  * @author  Austin Wolf
- * @brief
+ * @brief   session state machine states and transitions
  */
 
 #include "session_manager_internal.h"
@@ -165,9 +165,9 @@ static const state_t _idle =
     .on_reentry = NULL,
     .transitions = (transition_t[])
     {
-        {.event = SESSION_EVENT_STREAM, .next = &_streaming,     .name="Stream"},
-        {.event = SESSION_EVENT_RECORD, .next = &_recording,     .name="Record"},
-        {.event = SESSION_EVENT_PLAYBACK, .next = &_playback,     .name="Playback"},
+        {.event = SESSION_EVENT_STREAM,         .next = &_streaming,    .name="Stream"},
+        {.event = SESSION_EVENT_RECORD,         .next = &_recording,    .name="Record"},
+        {.event = SESSION_EVENT_PLAYBACK,       .next = &_playback,     .name="Playback"},
         {.event = SESSION_EVENT_CALIBRATE,      .next = &_calibrating,  .name="Calibrate"},
         {.event = NULL_TRANSITION}
     }
@@ -205,7 +205,7 @@ static const state_t _recording =
     .on_reentry = NULL,
     .transitions = (transition_t[])
     {
-        {.event = SESSION_EVENT_STOP,  .next = &_idle,     .name="Stop"},
+        {.event = SESSION_EVENT_STOP,           .next = &_idle,     .name="Stop"},
         {.event = SESSION_EVENT_TIMEOUT,        .next = &_idle,     .name="Timeout"},
         {.event = SESSION_EVENT_FLASH_FULL,     .next = &_idle,     .name="Flash Full"},
         {.event = NULL_TRANSITION}
@@ -243,8 +243,8 @@ static const state_t _calibrating =
     .on_reentry = NULL,
     .transitions = (transition_t[])
     {
-        {.event = SESSION_EVENT_SUCCESS, .next = &_idle,    .name="Success"},
-        {.event = SESSION_EVENT_ERROR, .next = &_idle,      .name="Failed"},
+        {.event = SESSION_EVENT_SUCCESS,    .next = &_idle,     .name="Success"},
+        {.event = SESSION_EVENT_ERROR,      .next = &_idle,     .name="Failed"},
         {.event = NULL_TRANSITION}
     }
 };

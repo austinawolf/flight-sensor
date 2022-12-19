@@ -1,8 +1,9 @@
 /**
- * @file    logger.c
+ * @file    icm20948.h
  * @author  Austin Wolf
- * @brief
+ * @brief   Wrapper for vendor drivers 
  */
+
 #include "icm20948.h"
 #include "boards.h"
 #include "nrf_drv_gpiote.h"
